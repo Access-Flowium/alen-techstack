@@ -1,0 +1,636 @@
+{
+  "meta": {
+    "updated": "Updated May 29, 2026 (from May QBR & weekly calls)",
+    "changelog": "<strong>Recent changes (May 2026):</strong> Orita retained · Maverick not renewing after pilot · Mercana moved to active (credit pricing) · Retention.com confirmed discontinued · Rebuy added (smart cart) · Arcady &amp; Recart added as pending · Sensit added under evaluation · Post Pilot: new DM-triggered flows, but paused (budget)."
+  },
+  "items": [
+    {
+      "id": "retention",
+      "column": "datain",
+      "group": "Visitor Identification",
+      "statusType": "removed",
+      "badge": "Discontinued",
+      "name": "Retention.com",
+      "cat": "Visitor Identification",
+      "role": "Anonymous visitor ID\nTurned off — segment archived",
+      "statustext": "Discontinued (turned off last year)",
+      "what": "Identified anonymous website visitors and matched them to known email profiles for outreach. No longer in use.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Previously pushed identified visitor data into Klaviyo profiles"
+        ]
+      ],
+      "owner": "N/A — discontinued",
+      "notes": "May 26 QBR: Joey confirmed Retention.com was turned off last year — analysis showed it added very few people to the list. Alex is archiving the leftover Retention.com segments still sitting in Klaviyo (archiving, not deleting). Kept on the diagram for history; no longer active."
+    },
+    {
+      "id": "digioh",
+      "column": "datain",
+      "group": "Visitor Identification",
+      "statusType": "active",
+      "badge": "",
+      "name": "Digioh",
+      "cat": "Opt-in Forms & Product Quiz",
+      "role": "Popups, forms, quiz\n(email capture)",
+      "statustext": "Active",
+      "what": "Powers all opt-in popups, exit-intent forms, and the product recommendation quiz on alen.com. Replaced Amped (acquired by Mailchimp). Better at targeting anonymous visitors than alternatives.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Form submissions subscribe to lists via \"integration pipelines\""
+        ],
+        [
+          "Postscript",
+          "Planned: webhook to trigger SMS opt-in after email capture (not yet launched)"
+        ]
+      ],
+      "owner": "Askari (technical), strategy was Erik",
+      "notes": "Winston asked (Apr 9) whether Digioh is still needed since Postscript rebuilt popups. Erik’s position: keep it for quiz + anonymous targeting. Head-to-head test was planned but never executed before his departure. Integration uses \"pipelines\" — each form maps to a Klaviyo list. 8+ active forms plus UTM-targeted variants."
+    },
+    {
+      "id": "postscript",
+      "column": "datain",
+      "group": "Visitor Identification",
+      "statusType": "active",
+      "badge": "",
+      "name": "Postscript",
+      "cat": "SMS Opt-in Capture",
+      "role": "SMS opt-in forms & popups\n(SMS capture)",
+      "statustext": "Active",
+      "what": "SMS platform — DATA-IN side. Runs its own SMS opt-in pop-ups/forms that collect subscribers (it took over SMS pop-ups, which overlaps with Digioh — clarify which forms live where).",
+      "connections": [
+        [
+          "Klaviyo",
+          "Shares subscriber data"
+        ],
+        [
+          "Shopify",
+          "SMS consent at checkout"
+        ],
+        [
+          "Digioh",
+          "Planned: webhook for combined email+SMS opt-in (not yet live)"
+        ]
+      ],
+      "owner": "Was Erik — needs new owner",
+      "notes": "See the outbound \"Postscript\" card for the full SMS-marketing notes. Note: Postscript has taken over SMS pop-ups — clarify overlap with Digioh forms."
+    },
+    {
+      "id": "segmentninja",
+      "column": "datain",
+      "group": "Enrichment",
+      "statusType": "active",
+      "badge": "",
+      "name": "Segment Ninja",
+      "cat": "PRIZM Demographic Enrichment",
+      "role": "Claritas PRIZM data",
+      "statustext": "Active",
+      "what": "Appends Claritas PRIZM household data to Klaviyo profiles — home value, household size, income, lifestyle clusters (Country Squires, Network Neighbors, Middleburg Managers). Household-level, not individual.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Profile data enrichment (appended properties)"
+        ],
+        [
+          "Post Pilot",
+          "Builds prospecting segments for direct mail"
+        ],
+        [
+          "Meta",
+          "PRIZM data for ad retargeting (Joey wants 70/30 retarget/prospect split)"
+        ]
+      ],
+      "owner": "Jim Kalogerakos (jimk@statanalytics.ca) — free beta access",
+      "notes": "~$165 + 155k profile credits through end of 2026. Erik was running backfill of all single-purifier purchasers. Target: 4+ bedrooms, 2,500+ sqft = multi-purifier candidates. This data feeds Post Pilot prospecting lists for the May 21-29 annual sale."
+    },
+    {
+      "id": "mercana",
+      "column": "datain",
+      "group": "Enrichment",
+      "statusType": "active",
+      "badge": "",
+      "name": "Mercana",
+      "cat": "AI Individual Enrichment",
+      "role": "AI individual enrichment\nCredit-based pricing",
+      "statustext": "Active — credit-based pricing",
+      "what": "AI-powered individual customer enrichment — home value (Redfin), bedrooms, occupation, interests, social. Much more granular than Claritas.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Enrichment via tags + API key"
+        ],
+        [
+          "Segment Ninja",
+          "Complements (not replaces) PRIZM household data — individual-level layer"
+        ]
+      ],
+      "owner": "Daniel & Vijay at Mercana. Credit-based pricing (enrichment credits).",
+      "notes": "May 29 Mercana sync: moving forward and being integrated into the segmentation strategy. Alex weaves Mercana segments into June/July campaigns and into the highest-producing flows first. Pricing is credit-based, so be mindful of enrichment volume. Key finding: many healthcare professionals → B2B angle. Horacio also exploring Mercana for postcard design."
+    },
+    {
+      "id": "fairing",
+      "column": "datain",
+      "group": "Attribution",
+      "statusType": "active",
+      "badge": "",
+      "name": "Fairing",
+      "cat": "Post-Purchase Surveys",
+      "role": "Post-purchase surveys",
+      "statustext": "Active",
+      "what": "Post-purchase attribution surveys (\"How did you hear about us?\"). Response data feeds into Klaviyo profiles for segmentation.",
+      "connections": [
+        [
+          "Shopify",
+          "Survey displayed post-checkout"
+        ],
+        [
+          "Klaviyo",
+          "Survey response data on profiles"
+        ]
+      ],
+      "owner": "Unknown — check access",
+      "notes": "Listed in original tech stack integration list."
+    },
+    {
+      "id": "triplewhale",
+      "column": "datain",
+      "group": "Attribution",
+      "statusType": "active",
+      "badge": "",
+      "name": "Triple Whale",
+      "cat": "Analytics & Attribution",
+      "role": "Sonar event attribution",
+      "statustext": "Active",
+      "what": "Analytics and attribution platform. Sonar feature enriches Klaviyo with event-level attribution data.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Sonar data enrichment"
+        ]
+      ],
+      "owner": "Unknown — check access",
+      "notes": "Sonar integration feeds event data into Klaviyo."
+    },
+    {
+      "id": "shopify",
+      "column": "store",
+      "group": "",
+      "hub": true,
+      "statusType": "active",
+      "badge": "",
+      "name": "Shopify Plus",
+      "cat": "E-Commerce Storefront",
+      "role": "E-commerce storefront. Orders, products, customers, checkout.",
+      "statustext": "Active",
+      "what": "The store. All product data, orders, customer records, and checkout flow live here. Shopify Plus tier enables checkout extensibility (SMS consent collection, Shopify Scripts).",
+      "connections": [
+        [
+          "Klaviyo",
+          "Bidirectional sync — orders, products, customers"
+        ],
+        [
+          "Recharge",
+          "Subscription billing for filters"
+        ],
+        [
+          "Yotpo",
+          "Loyalty widget on storefront"
+        ],
+        [
+          "Postscript",
+          "SMS consent collection at checkout"
+        ],
+        [
+          "Affirm",
+          "BNPL checkout option"
+        ],
+        [
+          "PickyStory",
+          "Product bundling"
+        ],
+        [
+          "Shogun",
+          "Page builder"
+        ]
+      ],
+      "owner": "Alen in-house. Improving (dev team) handles code changes.",
+      "notes": "Source of truth for all order/product data. Always coordinate with the Improving team for any storefront code changes (theme updates, reward tiers, etc.)."
+    },
+    {
+      "id": "recharge",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "active",
+      "badge": "",
+      "name": "Recharge",
+      "cat": "Subscription Management",
+      "role": "Filter subscriptions",
+      "statustext": "Active",
+      "what": "Manages filter replacement subscriptions. Subscription renewal orders flow into Klaviyo, which is why campaign revenue can look inflated if you don’t isolate checkout-only revenue.",
+      "connections": [
+        [
+          "Shopify",
+          "Subscription billing"
+        ],
+        [
+          "Klaviyo",
+          "Subscription events (renewal, cancellation, etc.)"
+        ]
+      ],
+      "owner": "Alen in-house",
+      "notes": "This is why Erik created the \"checkout-only revenue\" custom metric in Klaviyo. Without it, standard revenue metrics include auto-renewals, making campaign attribution unreliable."
+    },
+    {
+      "id": "yotpo",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "active",
+      "badge": "",
+      "name": "Yotpo",
+      "cat": "Loyalty & Rewards",
+      "role": "Loyalty & rewards",
+      "statustext": "Active",
+      "what": "Loyalty program AND product/site reviews. 600 pts = free Sentra starter kit ($30 value). 200 pts = free shipping. Points stack with sale discounts (Joey confirmed Apr 17).",
+      "connections": [
+        [
+          "Shopify",
+          "Rewards widget on store"
+        ],
+        [
+          "Klaviyo",
+          "Loyalty events trigger flows; some Yotpo emails to be moved into Klaviyo"
+        ]
+      ],
+      "owner": "CSM: Nicole (Miguel rolled off). Improving implements reward tiers.",
+      "notes": "UPDATE (May calls): Yotpo currently sends its OWN loyalty/review emails — Alex wants an audit to move some sends into Klaviyo for more control + cleaner metrics. Open question: confirm what review collection is handled by Yotpo vs Klaviyo. 600-pt Sentra + 200-pt free-shipping rewards live."
+    },
+    {
+      "id": "shogun",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "active",
+      "badge": "",
+      "name": "Shogun",
+      "cat": "Page Builder",
+      "role": "Page builder",
+      "statustext": "Active",
+      "what": "Landing page and content page builder for the Shopify store.",
+      "connections": [
+        [
+          "Shopify",
+          "Page builder overlay"
+        ]
+      ],
+      "owner": "Alen in-house / Improving",
+      "notes": "Used for landing pages. Low priority for ramp-up."
+    },
+    {
+      "id": "pickystory",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "active",
+      "badge": "",
+      "name": "PickyStory",
+      "cat": "Product Bundles",
+      "role": "Product bundles",
+      "statustext": "Active",
+      "what": "Product bundling and upsell tool on the Shopify store.",
+      "connections": [
+        [
+          "Shopify",
+          "Bundle configuration"
+        ]
+      ],
+      "owner": "Alen in-house",
+      "notes": "Low priority for ramp-up."
+    },
+    {
+      "id": "affirm",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "active",
+      "badge": "",
+      "name": "Affirm",
+      "cat": "Buy Now Pay Later",
+      "role": "BNPL checkout",
+      "statustext": "Active",
+      "what": "BNPL at checkout. Integrated through Shopify.",
+      "connections": [
+        [
+          "Shopify",
+          "BNPL checkout option"
+        ]
+      ],
+      "owner": "Alen in-house",
+      "notes": "Unclear if direct Klaviyo integration is needed — already working through Shopify."
+    },
+    {
+      "id": "rebuy",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "active",
+      "badge": "",
+      "name": "Rebuy",
+      "cat": "Smart Cart & Product Upsell",
+      "role": "Smart cart & upsell",
+      "statustext": "Active",
+      "what": "Smart-cart and product-upsell engine running in the cart and checkout experience.",
+      "connections": [
+        [
+          "Shopify",
+          "Runs in cart & checkout"
+        ]
+      ],
+      "owner": "Alen in-house (Winston). Improving supports site code.",
+      "notes": "Added after the May QBR — already live but missing here. Operates on-site, not on the retention side. Winston wants more post-purchase with it. Watch for whether any Rebuy data can feed Klaviyo cross-sell logic."
+    },
+    {
+      "id": "recart",
+      "column": "store",
+      "group": "Shopify Apps",
+      "statusType": "pending",
+      "badge": "Pending",
+      "name": "Recart",
+      "cat": "Cart / SMS Recovery",
+      "role": "Cart/SMS recovery\nUnder review — may overlap",
+      "statustext": "Pending — under review",
+      "what": "Cart-abandonment / SMS recovery tool. Surfaced on an implementation list during the May QBR. Function overlaps with tools already in the stack.",
+      "connections": [
+        [
+          "Shopify",
+          "Would run on cart / checkout (if kept)"
+        ]
+      ],
+      "owner": "Unclear — TBC with Winston",
+      "notes": "May 26 QBR: Winston said it \"should be taken out\"; Alex noted it is similar to Rebuy and Postscript, so it likely overlaps. Decision needed — confirm whether any active Recart implementation exists. Low priority."
+    },
+    {
+      "id": "klaviyo",
+      "column": "hub",
+      "group": "",
+      "hub": true,
+      "accent": "klaviyo",
+      "statusType": "active",
+      "badge": "",
+      "name": "Klaviyo",
+      "cat": "Email Marketing Hub (Nerve Center)",
+      "role": "Email marketing nerve center.\nFlows, campaigns, segments, forms, custom metrics.\n\nKEY: Checkout-only revenue metric — isolates real campaign revenue from Recharge renewals.",
+      "statustext": "Active",
+      "what": "The central platform. All email flows, campaigns, segments, embedded forms, and analytics. Connected to nearly every other tool. Houses Erik’s custom \"checkout-only revenue\" metric, which is critical for accurate attribution.",
+      "connections": [
+        [
+          "Shopify",
+          "Bidirectional sync — orders, products, customers"
+        ],
+        [
+          "Digioh",
+          "Receives form submissions via integration pipelines"
+        ],
+        [
+          "Yotpo",
+          "Receives loyalty events as flow triggers"
+        ],
+        [
+          "Segment Ninja",
+          "Receives PRIZM demographic data on profiles"
+        ],
+        [
+          "Mercana",
+          "Receives enrichment tags via API"
+        ],
+        [
+          "Triple Whale",
+          "Receives Sonar event attribution data"
+        ],
+        [
+          "Fairing",
+          "Receives post-purchase survey responses"
+        ],
+        [
+          "Recharge",
+          "Receives subscription events"
+        ],
+        [
+          "Orita",
+          "Sends audience data → Orita optimizes who receives each campaign"
+        ],
+        [
+          "Postscript",
+          "Shares subscriber data for SMS coordination"
+        ],
+        [
+          "Post Pilot",
+          "Sends segments to trigger postcards; receives postcard-delivery events (pending)"
+        ],
+        [
+          "Meta",
+          "Pushes audience segments for ad retargeting"
+        ]
+      ],
+      "owner": "Flowium team. Was Erik → now you.",
+      "notes": "CRITICAL: Find Erik’s checkout-only revenue metric before touching any reports. Standard Klaviyo revenue includes Recharge subscription renewals, which inflates numbers. Joey and Winston expect the isolated metric."
+    },
+    {
+      "id": "zendesk",
+      "column": "hub",
+      "group": "",
+      "statusType": "active",
+      "badge": "",
+      "name": "Zendesk",
+      "cat": "Customer Support",
+      "role": "Customer support",
+      "statustext": "Active",
+      "what": "Customer support ticketing. Alen recently downsized their CX team.",
+      "connections": [
+        [
+          "Shopify",
+          "Customer data"
+        ]
+      ],
+      "owner": "Alen in-house",
+      "notes": "K:BOS recommended Klaviyo Customer Service Hub and AI Customer Agent integrations — could help offset the smaller CX team."
+    },
+    {
+      "id": "orita",
+      "column": "optimize",
+      "group": "AI Send Optimization",
+      "statusType": "active",
+      "badge": "Retained",
+      "name": "Orita",
+      "cat": "AI Send Optimization (Audience)",
+      "role": "WHO to send to.\nAudience selection.\n$1,200/mo — continuing",
+      "statustext": "Active — retained (May QBR)",
+      "what": "AI audience optimization. For each send, determines which subscribers are most likely to engage and suppresses low-propensity recipients. Reduces volume while maintaining or improving revenue.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Reads audience data, optimizes who receives each campaign"
+        ],
+        [
+          "Post Pilot",
+          "Erik suggested connecting for direct mail optimization"
+        ]
+      ],
+      "owner": "Ana Lozada-Smith (CSM), Steven Raquet (Agency CSM), Diana Zheng. ~$1,200/mo.",
+      "notes": "DECISION (May 26 QBR): continuing with Orita. Winston: \"if I had to pick between Maverick and Orita, I would pick Orita.\" Values Orita’s ~40k \"always-email\" segment. Continue using the checkout-only revenue metric to evaluate."
+    },
+    {
+      "id": "maverick",
+      "column": "optimize",
+      "group": "AI Send Optimization",
+      "statusType": "removed",
+      "badge": "Not renewing",
+      "name": "Maverick",
+      "cat": "AI Send Optimization (Content & Timing)",
+      "role": "WHAT & WHEN to send.\nDropping after pilot ends",
+      "statustext": "Not renewing — dropping after pilot",
+      "what": "HTML rendering optimization and send-time optimization. Orita picks WHO to send to; Maverick optimizes WHAT they see and WHEN. Official Klaviyo tech partner.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Optimizes email HTML and send timing per recipient"
+        ]
+      ],
+      "owner": "Pricing TBD — winding down",
+      "notes": "DECISION (May 26 QBR): not moving forward after the current agreement ends. Reasons: Winston’s deliverability concern; the 4-way split blocks other A/B tests; judged \"not providing as much value\" vs Orita. If revisited, must use checkout-only revenue metric."
+    },
+    {
+      "id": "sensit",
+      "column": "optimize",
+      "group": "Evaluating / Pending",
+      "statusType": "eval",
+      "badge": "Eval",
+      "name": "Sensit",
+      "cat": "Under Evaluation",
+      "role": "Under evaluation\nNew tool Alex wants to trial",
+      "statustext": "Under evaluation",
+      "what": "New tool that Alex (Alexandra Palau, strategist) wants to trial. Flagged during the May 26 QBR. Specific capability still to be detailed.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Prospective — role/integration TBC"
+        ]
+      ],
+      "owner": "Alex (Flowium) — championing the evaluation.",
+      "notes": "Surfaced in the May QBR. Action: have Alex share what Sensit does + a demo/URL, then scope a POC and decide. No commercials yet."
+    },
+    {
+      "id": "arcady",
+      "column": "optimize",
+      "group": "Evaluating / Pending",
+      "statusType": "pending",
+      "badge": "Pending",
+      "name": "Arcady",
+      "cat": "AI Tool (evaluation)",
+      "role": "AI tool — POC needed\nKlaviyo-recognized",
+      "statustext": "Pending — POC needed",
+      "what": "An AI marketing tool Joey flagged as worth evaluating. Recognized / awarded by Klaviyo with a strong client reference list.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Prospective — Klaviyo-ecosystem AI tool (TBC)"
+        ]
+      ],
+      "owner": "Winston to get details/URL from Joey; Alex + Carla to evaluate.",
+      "notes": "May QBR + May 21 call: a POC is needed. Action: Winston to pass the specific tool/URL, then Alex/Carla run a POC. No commercials or integration yet."
+    },
+    {
+      "id": "email",
+      "column": "outbound",
+      "group": "",
+      "accent": "email",
+      "statusType": "active",
+      "badge": "",
+      "name": "Email Campaigns",
+      "cat": "Outbound Channel",
+      "role": "Sent via Klaviyo.\nFlows + scheduled campaigns.",
+      "statustext": "Active",
+      "what": "The primary outbound channel. Campaigns and automated flows sent via Klaviyo. Includes lifecycle flows, campaigns, and universal blocks (currently Sentra cross-sell).",
+      "connections": [
+        [
+          "Klaviyo",
+          "Sent directly from Klaviyo"
+        ]
+      ],
+      "owner": "Flowium team",
+      "notes": "Joey wants Sentra universal blocks in ALL customer emails for the next 2-3 months. Monthly report goes to Winston before the 3rd Thursday of each month."
+    },
+    {
+      "id": "postscript-out",
+      "column": "outbound",
+      "group": "",
+      "statusType": "active",
+      "badge": "",
+      "name": "Postscript",
+      "cat": "SMS Marketing",
+      "role": "SMS marketing.\nMigrated from Klaviyo SMS\nMar 2026",
+      "statustext": "Active",
+      "what": "SMS platform — OUTBOUND side. SMS flows, campaigns and compliance. Migrated from Klaviyo SMS in March 2026 for better international rates, automations, and compliance tooling.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Shares subscriber data"
+        ],
+        [
+          "Shopify",
+          "SMS consent at checkout"
+        ]
+      ],
+      "owner": "Was Erik — needs new owner",
+      "notes": "URGENT — Texas exclusion: ALL Texas recipients must be excluded from SMS sends (legal). Verify every active flow and campaign. TCPA compliance checklist requested by Postscript — check status. Postscript-vs-Klaviyo SMS comparison pushed to end of Q2 (last Klaviyo SMS was Mar 6)."
+    },
+    {
+      "id": "postpilot",
+      "column": "outbound",
+      "group": "",
+      "statusType": "active",
+      "badge": "",
+      "name": "Post Pilot",
+      "cat": "Direct Mail",
+      "role": "Direct mail postcards.\nNEW: delivery triggers Klaviyo flows\nPaused — 1 mailing budget left",
+      "statustext": "Active — but direct mail paused (budget)",
+      "what": "Physical postcards triggered by Klaviyo segments. Strategies: retention (reactivate ~47k unsubscribed owners), site retargeting via pixel, cold prospecting via Claritas data. NEW: direct-mail \"flows\" — postcard-delivery events sent to Klaviyo to trigger flows.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Sends segments to trigger mailings; NEW — postcard-delivery events flow back (integration pending)"
+        ],
+        [
+          "Segment Ninja",
+          "Claritas data builds prospecting lists"
+        ],
+        [
+          "Mercana",
+          "Property segments + possible postcard design input"
+        ]
+      ],
+      "owner": "Kelly Barden (Post Pilot). Alen side: Horacio (on leave — covered by \"another Alexandra\").",
+      "notes": "First test mail returned ~9x ROI (Joey: \"we stacked the deck\"). Post Pilot announced direct-mail FLOWS; data not visible in Klaviyo yet (waiting on integration). BUDGET: only one more mailing approved — Winston wants to PAUSE direct mail and lean Mercana into the email side."
+    },
+    {
+      "id": "meta",
+      "column": "outbound",
+      "group": "",
+      "statusType": "active",
+      "badge": "",
+      "name": "Meta / Facebook",
+      "cat": "Ad Retargeting",
+      "role": "Ad retargeting.\nAudience sync from Klaviyo +\nPRIZM data from Seg. Ninja",
+      "statustext": "Active",
+      "what": "Ad platform. Veronica manages audience syncs from Klaviyo. Joey wants 70/30 spend split (retargeting vs prospecting) using PRIZM demographic data from Segment Ninja.",
+      "connections": [
+        [
+          "Klaviyo",
+          "Audience sync — engaged, unengaged, unsubscribed lists"
+        ],
+        [
+          "Segment Ninja",
+          "PRIZM data for demographic targeting"
+        ]
+      ],
+      "owner": "Veronica (retargeting syncs)",
+      "notes": "Erik was coordinating with Veronica on syncing email-unengaged and unsubscribed audiences to Meta for retargeting."
+    }
+  ]
+}

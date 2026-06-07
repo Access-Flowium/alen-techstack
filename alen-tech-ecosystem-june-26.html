@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alen Tech Ecosystem — Data Flow</title>
+<style>
+  /* ============================================================
+     Alen brand theme  ·  alen.com
+     Light, airy "clean air" look — navy + teal on soft white
+     ============================================================ */
+  :root {
+    --bg:        #eef4f6;   /* airy page wash      */
+    --bg-2:      #e2edf0;   /* gradient base       */
+    --surface:   #ffffff;   /* cards / panels      */
+    --surface-2: #f6fafb;   /* subtle inset        */
+    --line:      #dbe6ea;   /* hairline borders    */
+    --line-2:    #c9d8de;   /* stronger borders    */
+    --navy:      #0E2A47;   /* primary brand ink   */
+    --navy-2:    #103a5c;   /* navy gradient       */
+    --ink:       #243b4d;   /* body text           */
+    --ink-soft:  #5d7383;   /* secondary text      */
+    --muted:     #93a6b0;   /* labels / captions   */
+    --teal:      #1FA89B;   /* brand accent        */
+    --teal-deep: #127A70;   /* accent shade        */
+    --teal-soft: #e4f4f1;   /* accent tint         */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    color: var(--ink);
+    min-height: 100vh; padding: 30px 40px;
+    overflow-x: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1 { font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 3px; letter-spacing: -0.2px; }
+  .subtitle { font-size: 12px; color: var(--ink-soft); margin-bottom: 16px; }
+  #changelog {
+    font-size: 11px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-left: 3px solid var(--teal);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 26px;
+    max-width: 1180px; line-height: 1.55;
+    box-shadow: 0 1px 3px rgba(14,42,71,0.04);
+  }
+  #changelog strong { color: var(--teal-deep); }
+
+
+  /* ---- alen.com branding ---- */
+  .brandbar { display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 60%,var(--teal-deep) 135%);
+    border-radius:12px; padding:16px 24px; margin-bottom:20px;
+    box-shadow:0 6px 20px rgba(14,42,71,0.18); }
+  .brandbar .wm { font-size:24px; font-weight:800; color:#fff; letter-spacing:0.5px; }
+  .brandbar .wm sup { color:#7fe0d4; font-size:11px; top:-0.8em; }
+  .brandbar .brand-tag { margin-left:14px; font-size:9px; letter-spacing:3px; color:#cfeee9;
+    text-transform:uppercase; border-left:1px solid rgba(255,255,255,.28); padding-left:14px; }
+  .brandbar .brand-right { font-size:12px; font-weight:700; letter-spacing:2px; color:#8fe6da; }
+  .brandfoot { margin-top:26px; padding-top:12px; border-top:1px solid var(--line);
+    font-size:10px; color:var(--muted); display:flex; justify-content:space-between; max-width:1200px; }
+  .brandfoot b { color:var(--teal-deep); font-weight:700; }
+
+  /* ---- Flow layout ---- */
+  .flow {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    min-width: 1200px;
+    position: relative;
+  }
+
+  /* Column */
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .col-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--teal-deep);
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line-2);
+    margin-bottom: 4px;
+  }
+
+  /* Arrow column */
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-top: 36px;
+    flex-shrink: 0;
+    width: 48px;
+  }
+  .arrow-col svg { opacity: 0.55; }
+
+  /* Cards */
+  .card {
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    width: 170px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(14,42,71,0.05);
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--teal); box-shadow: 0 6px 18px rgba(31,168,155,0.18); }
+  .card.selected { border-color: var(--teal); box-shadow: 0 0 0 2px rgba(31,168,155,0.25), 0 6px 18px rgba(31,168,155,0.18); }
+  .card h3 { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 2px; }
+  .card .role { font-size: 10px; color: var(--ink-soft); line-height: 1.4; }
+  .card .badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 8px; font-weight: 700; padding: 2px 6px;
+    border-radius: 6px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .badge-active  { background: var(--teal-soft); color: var(--teal-deep); }
+  .badge-eval    { background: #fdf1df; color: #b07614; }
+  .badge-trial   { background: #fde7e4; color: #cf4537; }
+  .badge-removed { background: #eaeef1; color: #8a99a4; }
+  .badge-pending { background: #e6f0fa; color: #2c6db1; }
+  .card.pending { border-style: dashed; border-color: var(--line-2); }
+  .card.removed { opacity: 0.62; background: var(--surface-2); }
+  .card.removed h3 { text-decoration: line-through; text-decoration-color: var(--muted); }
+
+  /* Big hub card */
+  .hub {
+    width: 200px;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    border-color: transparent;
+    box-shadow: 0 8px 22px rgba(14,42,71,0.22);
+  }
+  .hub h3 { font-size: 16px; color: #ffffff; }
+  .hub .role { font-size: 11px; color: #c7d8e2; }
+
+  /* Group box */
+  .group {
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.45);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-label {
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); text-align: center;
+  }
+  .group .card { width: 148px; }
+
+  /* Detail panel */
+  #detail {
+    position: fixed; right: -440px; top: 0; width: 420px; height: 100vh;
+    background: var(--surface); border-left: 1px solid var(--line);
+    padding: 28px 24px; overflow-y: auto; z-index: 200;
+    transition: right 0.3s ease;
+    box-shadow: -12px 0 30px rgba(14,42,71,0.10);
+  }
+  #detail.open { right: 0; }
+  #detail h2 { font-size: 18px; color: var(--navy); margin-bottom: 2px; }
+  #detail .cat-label { font-size: 11px; color: var(--teal-deep); font-weight:600; margin-bottom: 18px; display: block; }
+  #detail .field { margin-bottom: 16px; }
+  #detail .field label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--muted); display: block; margin-bottom: 4px; font-weight: 700;
+  }
+  #detail .field p { font-size: 13px; line-height: 1.55; color: var(--ink); }
+  #detail .close-btn {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-soft);
+    width: 28px; height: 28px; border-radius: 8px; font-size: 16px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  #detail .close-btn:hover { color: var(--navy); border-color: var(--teal); }
+  #detail .conn-list { list-style: none; }
+  #detail .conn-list li {
+    font-size: 12px; padding: 6px 0;
+    border-bottom: 1px solid var(--line); color: var(--ink);
+  }
+  #detail .conn-list li strong { color: var(--teal-deep); }
+  #detail .conn-list li span { color: var(--ink-soft); font-size: 11px; }
+
+  /* Legend */
+  #legend {
+    position: fixed; bottom: 16px; right: 16px;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 14px; z-index: 50;
+    font-size: 10px; color: var(--ink-soft);
+    box-shadow: 0 4px 14px rgba(14,42,71,0.10);
+  }
+  #legend .row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  #legend .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Editable fields */
+  #detail p.editable {
+    border: 1px dashed var(--line-2); border-radius: 8px;
+    padding: 7px 9px; margin-top: 2px;
+    transition: border-color 0.15s, background 0.15s; cursor: text;
+  }
+  #detail p.editable:hover { border-color: var(--teal); }
+  #detail p.editable:focus {
+    outline: none; border-color: var(--teal);
+    background: var(--teal-soft); box-shadow: 0 0 0 2px rgba(31,168,155,0.18);
+  }
+  #detail .field label .edit-tag {
+    font-size: 8px; color: var(--teal-deep); margin-left: 6px;
+    border: 1px solid var(--teal); border-radius: 4px; padding: 1px 4px;
+    letter-spacing: 0.3px; text-transform: none;
+  }
+
+  /* Export button + save hint */
+  #export-btn {
+    position: fixed; bottom: 16px; left: 16px; z-index: 60;
+    background: var(--teal); color: #fff; border: 1px solid var(--teal-deep);
+    border-radius: 10px; padding: 10px 16px; font-size: 12px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(31,168,155,0.30);
+  }
+  #export-btn:hover { background: var(--teal-deep); }
+  #save-hint {
+    position: fixed; bottom: 56px; left: 16px; z-index: 60;
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 11px; font-size: 11px; max-width: 260px;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    box-shadow: 0 4px 14px rgba(14,42,71,0.10);
+  }
+
+  /* Overlay */
+  #overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(14,42,71,0.18);
+    z-index: 150;
+  }
+  #overlay.open { display: block; }
+</style>
+</head>
+<body>
+
+
+<div class="brandbar">
+  <div><span class="wm">alen<sup>®</sup></span><span class="brand-tag">Air Purifiers &nbsp;·&nbsp; Tech Ecosystem</span></div>
+  <div class="brand-right">alen.com</div>
+</div>
+
+<h1>Alen Tech Ecosystem — Data Flow</h1>
+<p class="subtitle">Left to right: how data moves from customer touchpoints through to outbound channels. Click any card for details. &nbsp;|&nbsp; Updated May 29, 2026 (from May QBR &amp; weekly calls)</p>
+
+<div id="changelog">
+  <strong>Recent changes (May 2026):</strong>
+  Orita retained · Maverick not renewing after pilot · Mercana moved to active (credit pricing) ·
+  Retention.com confirmed discontinued · Rebuy added (smart cart) ·
+  Arcady &amp; Recart added as pending · Sensit added under evaluation ·
+  Post Pilot: new DM-triggered flows, but paused (budget).
+</div>
+
+<div class="flow">
+
+  <!-- COL 1: Data Sources -->
+  <div class="col">
+    <div class="col-header">Data In</div>
+    <div class="group">
+      <div class="group-label">Visitor Identification</div>
+      <div class="card removed" data-id="retention">
+        <span class="badge badge-removed">Discontinued</span>
+        <h3>Retention.com</h3>
+        <div class="role">Anonymous visitor ID<br>Turned off — segment archived</div>
+      </div>
+      <div class="card" data-id="digioh">
+        <span class="badge badge-active">Active</span>
+        <h3>Digioh</h3>
+        <div class="role">Popups, forms, quiz<br>(email capture)</div>
+      </div>
+      <div class="card" data-id="postscript">
+        <span class="badge badge-active">Active</span>
+        <h3>Postscript</h3>
+        <div class="role">SMS opt-in forms &amp; popups<br>(SMS capture)</div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">Enrichment</div>
+      <div class="card" data-id="segmentninja">
+        <span class="badge badge-active">Active</span>
+        <h3>Segment Ninja</h3>
+        <div class="role">Claritas PRIZM data</div>
+      </div>
+      <div class="card" data-id="mercana">
+        <span class="badge badge-active">Active</span>
+        <h3>Mercana</h3>
+        <div class="role">AI individual enrichment<br>Credit-based pricing</div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">Attribution</div>
+      <div class="card" data-id="fairing">
+        <span class="badge badge-active">Active</span>
+        <h3>Fairing</h3>
+        <div class="role">Post-purchase surveys</div>
+      </div>
+      <div class="card" data-id="triplewhale">
+        <span class="badge badge-active">Active</span>
+        <h3>Triple Whale</h3>
+        <div class="role">Sonar event attribution</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="arrow-col">
+    <svg width="40" height="24" viewBox="0 0 40 24"><path d="M4 12h28m0 0l-8-7m8 7l-8 7" stroke="#1FA89B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+  </div>
+
+  <!-- COL 2: Shopify Ecosystem -->
+  <div class="col">
+    <div class="col-header">Store</div>
+    <div class="card hub" data-id="shopify">
+      <span class="badge badge-active">Active</span>
+      <h3>Shopify Plus</h3>
+      <div class="role">E-commerce storefront. Orders, products, customers, checkout.</div>
+    </div>
+    <div class="group">
+      <div class="group-label">Shopify Apps</div>
+      <div class="card" data-id="recharge">
+        <h3>Recharge</h3>
+        <div class="role">Filter subscriptions</div>
+      </div>
+      <div class="card" data-id="yotpo">
+        <span class="badge badge-active">Active</span>
+        <h3>Yotpo</h3>
+        <div class="role">Loyalty &amp; rewards</div>
+      </div>
+      <div class="card" data-id="shogun">
+        <h3>Shogun</h3>
+        <div class="role">Page builder</div>
+      </div>
+      <div class="card" data-id="pickystory">
+        <h3>PickyStory</h3>
+        <div class="role">Product bundles</div>
+      </div>
+      <div class="card" data-id="affirm">
+        <h3>Affirm</h3>
+        <div class="role">BNPL checkout</div>
+      </div>
+      <div class="card" data-id="rebuy">
+        <span class="badge badge-active">Active</span>
+        <h3>Rebuy</h3>
+        <div class="role">Smart cart &amp; upsell</div>
+      </div>
+      <div class="card pending" data-id="recart">
+        <span class="badge badge-pending">Pending</span>
+        <h3>Recart</h3>
+        <div class="role">Cart/SMS recovery<br>Under review — may overlap</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="arrow-col">
+    <svg width="40" height="24" viewBox="0 0 40 24"><path d="M4 12h28m0 0l-8-7m8 7l-8 7" stroke="#1FA89B" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <div style="font-size:9px; color:var(--teal); margin-top:4px; text-align:center; opacity:0.7;">sync</div>
+  </div>
+
+  <!-- COL 3: Klaviyo Hub -->
+  <div class="col" style="justify-content: center;">
+    <div class="col-header">Hub</div>
+    <div class="card hub" data-id="klaviyo" style="width:220px; padding: 24px; background:linear-gradient(135deg,#0E2A47 0%,#127A70 140%);">
+      <span class="badge badge-active">Active</span>
+      <h3 style="font-size:18px;">Klaviyo</h3>
+      <div class="role" style="font-size:12px; margin-top:6px;">
+        Email marketing nerve center.<br>
+        Flows, campaigns, segments,<br>
+        forms, custom metrics.
+      </div>
+      <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.18);">
+        <div style="font-size:9px; color:#ffd98a; font-weight:700;">KEY: Checkout-only revenue metric</div>
+        <div style="font-size:9px; color:#bcd0db; margin-top:2px;">Erik created this to isolate real campaign revenue from Recharge subscription renewals.</div>
+      </div>
+    </div>
+    <div class="card" data-id="zendesk" style="margin-top: 12px;">
+      <h3>Zendesk</h3>
+      <div class="role">Customer support</div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="arrow-col">
+    <svg width="40" height="24" viewBox="0 0 40 24"><path d="M4 12h28m0 0l-8-7m8 7l-8 7" stroke="#1FA89B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+  </div>
+
+  <!-- COL 4: Optimization Layer -->
+  <div class="col">
+    <div class="col-header">Optimize</div>
+    <div class="group">
+      <div class="group-label">AI Send Optimization</div>
+      <div class="card" data-id="orita">
+        <span class="badge badge-active">Retained</span>
+        <h3>Orita</h3>
+        <div class="role">WHO to send to.<br>Audience selection.<br>$1,200/mo — continuing</div>
+      </div>
+      <div class="card removed" data-id="maverick">
+        <span class="badge badge-removed">Not renewing</span>
+        <h3>Maverick</h3>
+        <div class="role">WHAT &amp; WHEN to send.<br>Dropping after pilot ends</div>
+      </div>
+    </div>
+    <div style="font-size:9px; color:var(--teal-deep); text-align:center; padding:7px 8px; border:1px solid var(--teal); background:var(--teal-soft); border-radius:8px; margin-top:4px;">
+      Decision (May QBR): continue Orita,<br>do not renew Maverick after pilot.
+    </div>
+    <div class="group" style="margin-top:6px;">
+      <div class="group-label">Evaluating / Pending</div>
+      <div class="card" data-id="sensit">
+        <span class="badge badge-eval">Eval</span>
+        <h3>Sensit</h3>
+        <div class="role">Under evaluation<br>New tool Alex wants to trial</div>
+      </div>
+      <div class="card pending" data-id="arcady">
+        <span class="badge badge-pending">Pending</span>
+        <h3>Arcady</h3>
+        <div class="role">AI tool — POC needed<br>Klaviyo-recognized</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW -->
+  <div class="arrow-col">
+    <svg width="40" height="24" viewBox="0 0 40 24"><path d="M4 12h28m0 0l-8-7m8 7l-8 7" stroke="#1FA89B" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+  </div>
+
+  <!-- COL 5: Outbound Channels -->
+  <div class="col">
+    <div class="col-header">Outbound</div>
+    <div class="card" data-id="email" style="border-color: var(--teal);">
+      <h3 style="color:var(--teal-deep);">Email Campaigns</h3>
+      <div class="role">Sent via Klaviyo.<br>Flows + scheduled campaigns.</div>
+    </div>
+    <div class="card" data-id="postscript">
+      <span class="badge badge-active">Active</span>
+      <h3>Postscript</h3>
+      <div class="role">SMS marketing.<br>Migrated from Klaviyo SMS<br>Mar 2026</div>
+    </div>
+    <div class="card" data-id="postpilot">
+      <span class="badge badge-active">Active</span>
+      <h3>Post Pilot</h3>
+      <div class="role">Direct mail postcards.<br>NEW: delivery triggers Klaviyo flows<br>Paused — 1 mailing budget left</div>
+    </div>
+    <div class="card" data-id="meta">
+      <span class="badge badge-active">Active</span>
+      <h3>Meta / Facebook</h3>
+      <div class="role">Ad retargeting.<br>Audience sync from Klaviyo +<br>PRIZM data from Seg. Ninja</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="brandfoot">
+  <span>Alen<b>®</b> &nbsp;·&nbsp; Retention &amp; Lifecycle Tech Map</span>
+  <span>Internal reference &nbsp;·&nbsp; alen.com</span>
+</div>
+
+<!-- Save / export updated HTML -->
+<button id="export-btn" title="Download an updated copy of this file with your edits, then upload it to GitHub">⬇ Download updated HTML</button>
+<div id="save-hint">Saved on this browser. Click “Download updated HTML” to publish for everyone.</div>
+
+<!-- Legend -->
+<div id="legend">
+  <div class="row"><div class="dot" style="background:#1FA89B"></div> Active / retained</div>
+  <div class="row"><div class="dot" style="background:#b07614"></div> Under evaluation</div>
+  <div class="row"><div class="dot" style="background:#cf4537"></div> New / trial</div>
+  <div class="row"><div class="dot" style="background:#2c6db1"></div> Pending / POC</div>
+  <div class="row"><div class="dot" style="background:#93a6b0"></div> Discontinued</div>
+</div>
+
+<!-- Overlay -->
+<div id="overlay" onclick="closeDetail()"></div>
+
+<!-- Detail panel -->
+<div id="detail">
+  <button class="close-btn" onclick="closeDetail()">×</button>
+  <h2 id="d-name"></h2>
+  <span class="cat-label" id="d-cat"></span>
+  <div class="field"><label>What it does</label><p id="d-what"></p></div>
+  <div class="field"><label>Status</label><p id="d-status"></p></div>
+  <div class="field"><label>Data flows to / from</label><ul class="conn-list" id="d-conn"></ul></div>
+  <div class="field"><label>Owner / contacts<span class="edit-tag">✎ editable</span></label><p id="d-owner"></p></div>
+  <div class="field"><label>Handover notes<span class="edit-tag">✎ editable</span></label><p id="d-notes"></p></div>
+</div>
+
+<script>
+/* DATA_START — do not remove this marker (used by the Save/Export button) */
+const data = {
+  "retention": {
+    "name": "Retention.com",
+    "cat": "Visitor Identification",
+    "status": "Discontinued (turned off last year)",
+    "what": "Identified anonymous website visitors and matched them to known email profiles for outreach. No longer in use.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Previously pushed identified visitor data into Klaviyo profiles"
+      ]
+    ],
+    "owner": "N/A — discontinued",
+    "notes": "May 26 QBR: Joey confirmed Retention.com was turned off last year — analysis showed it added very few people to the list. Alex is archiving the leftover Retention.com segments still sitting in Klaviyo (archiving, not deleting). Kept on the diagram for history; no longer active."
+  },
+  "digioh": {
+    "name": "Digioh",
+    "cat": "Opt-in Forms & Product Quiz",
+    "status": "Active",
+    "what": "Powers all opt-in popups, exit-intent forms, and the product recommendation quiz on alen.com. Replaced Amped (acquired by Mailchimp). Better at targeting anonymous visitors than alternatives.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Form submissions subscribe to lists via \"integration pipelines\""
+      ],
+      [
+        "Postscript",
+        "Planned: webhook to trigger SMS opt-in after email capture (not yet launched)"
+      ]
+    ],
+    "owner": "Askari (technical), strategy was Erik",
+    "notes": "Winston asked (Apr 9) whether Digioh is still needed since Postscript rebuilt popups. Erik's position: keep it for quiz + anonymous targeting. Head-to-head test was planned but never executed before his departure. Integration uses \"pipelines\" — each form maps to a Klaviyo list. 8+ active forms plus UTM-targeted variants."
+  },
+  "segmentninja": {
+    "name": "Segment Ninja / Claritas",
+    "cat": "PRIZM Demographic Enrichment",
+    "status": "Active",
+    "what": "Appends Claritas PRIZM household data to Klaviyo profiles — home value, household size, income, lifestyle clusters (Country Squires, Network Neighbors, Middleburg Managers). Household-level, not individual.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Profile data enrichment (appended properties)"
+      ],
+      [
+        "Post Pilot",
+        "Builds prospecting segments for direct mail"
+      ],
+      [
+        "Meta",
+        "PRIZM data for ad retargeting (Joey wants 70/30 retarget/prospect split)"
+      ]
+    ],
+    "owner": "Jim Kalogerakos (jimk@statanalytics.ca) — free beta access",
+    "notes": "~$165 + 155k profile credits through end of 2026. Erik was running backfill of all single-purifier purchasers. Target: 4+ bedrooms, 2,500+ sqft = multi-purifier candidates. This data feeds Post Pilot prospecting lists for the May 21-29 annual sale."
+  },
+  "mercana": {
+    "name": "Mercana",
+    "cat": "AI Individual Enrichment",
+    "status": "Active — credit-based pricing",
+    "what": "AI-powered individual customer enrichment — home value (Redfin), bedrooms, occupation, interests, social. Much more granular than Claritas. Think \"this person is a nurse with a 4-bed home in Kansas worth $450k\" vs. Claritas's household archetype.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Enrichment via tags + API key"
+      ],
+      [
+        "Segment Ninja",
+        "Complements (not replaces) PRIZM household data — individual-level layer"
+      ]
+    ],
+    "owner": "Daniel & Vijay at Mercana. Credit-based pricing (enrichment credits).",
+    "notes": "May 29 Mercana sync: moving forward and being integrated into the segmentation strategy. Plan — Mercana shares the segments/properties it finds; Alex weaves them into June/July campaigns (~30-40 sends/mo leaves room) and into the highest-producing flows first (account has 100+ flows, so prioritize). Pricing is credit-based, so be mindful of enrichment volume. Key finding still stands: many healthcare professionals → B2B angle. Horacio also exploring Mercana for postcard design."
+  },
+  "fairing": {
+    "name": "Fairing",
+    "cat": "Post-Purchase Surveys",
+    "status": "Active",
+    "what": "Post-purchase attribution surveys (\"How did you hear about us?\"). Response data feeds into Klaviyo profiles for segmentation.",
+    "connections": [
+      [
+        "Shopify",
+        "Survey displayed post-checkout"
+      ],
+      [
+        "Klaviyo",
+        "Survey response data on profiles"
+      ]
+    ],
+    "owner": "Unknown — check access",
+    "notes": "Listed in original tech stack integration list."
+  },
+  "triplewhale": {
+    "name": "Triple Whale",
+    "cat": "Analytics & Attribution",
+    "status": "Active",
+    "what": "Analytics and attribution platform. Sonar feature enriches Klaviyo with event-level attribution data for better understanding of what drives conversions.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Sonar data enrichment"
+      ]
+    ],
+    "owner": "Unknown — check access",
+    "notes": "Sonar integration feeds event data into Klaviyo."
+  },
+  "shopify": {
+    "name": "Shopify Plus",
+    "cat": "E-Commerce Storefront",
+    "status": "Active",
+    "what": "The store. All product data, orders, customer records, and checkout flow live here. Shopify Plus tier enables checkout extensibility (SMS consent collection, Shopify Scripts).",
+    "connections": [
+      [
+        "Klaviyo",
+        "Bidirectional sync — orders, products, customers"
+      ],
+      [
+        "Recharge",
+        "Subscription billing for filters"
+      ],
+      [
+        "Yotpo",
+        "Loyalty widget on storefront"
+      ],
+      [
+        "Postscript",
+        "SMS consent collection at checkout"
+      ],
+      [
+        "Affirm",
+        "BNPL checkout option"
+      ],
+      [
+        "PickyStory",
+        "Product bundling"
+      ],
+      [
+        "Shogun",
+        "Page builder"
+      ]
+    ],
+    "owner": "Alen in-house. Improving (dev team) handles code changes.",
+    "notes": "You have access. Source of truth for all order/product data. Always coordinate with the Improving team for any storefront code changes (theme updates, reward tiers, etc.)."
+  },
+  "recharge": {
+    "name": "Recharge",
+    "cat": "Subscription Management",
+    "status": "Active",
+    "what": "Manages filter replacement subscriptions. Subscription renewal orders flow into Klaviyo, which is why campaign revenue can look inflated if you don't isolate checkout-only revenue.",
+    "connections": [
+      [
+        "Shopify",
+        "Subscription billing"
+      ],
+      [
+        "Klaviyo",
+        "Subscription events (renewal, cancellation, etc.)"
+      ]
+    ],
+    "owner": "Alen in-house",
+    "notes": "This is why Erik created the \"checkout-only revenue\" custom metric in Klaviyo. Without it, standard revenue metrics include auto-renewals, making campaign attribution unreliable."
+  },
+  "yotpo": {
+    "name": "Yotpo",
+    "cat": "Loyalty & Rewards",
+    "status": "Active",
+    "what": "Loyalty program AND product/site reviews. 600 pts = free Sentra starter kit ($30 value). 200 pts = free shipping. Points stack with sale discounts (Joey confirmed Apr 17).",
+    "connections": [
+      [
+        "Shopify",
+        "Rewards widget on store"
+      ],
+      [
+        "Klaviyo",
+        "Loyalty events trigger flows; some Yotpo emails to be moved into Klaviyo"
+      ]
+    ],
+    "owner": "CSM: Nicole (Miguel rolled off). Improving implements reward tiers.",
+    "notes": "UPDATE (May calls): Yotpo currently sends its OWN loyalty/review emails — Alex wants an audit with Yotpo (Miguel sitting in) to move some of those sends into Klaviyo for more control + cleaner metrics, and to bring loyalty (points → dollars) into campaign work. Open question: confirm what review collection (product vs site reviews) is handled by Yotpo vs Klaviyo. 600-pt Sentra reward + 200-pt free-shipping reward live; a 600-pt free-Sentra send already ran (May 15). CSM is Nicole."
+  },
+  "shogun": {
+    "name": "Shogun",
+    "cat": "Page Builder",
+    "status": "Active",
+    "what": "Landing page and content page builder for the Shopify store.",
+    "connections": [
+      [
+        "Shopify",
+        "Page builder overlay"
+      ]
+    ],
+    "owner": "Alen in-house / Improving",
+    "notes": "Used for landing pages. Low priority for ramp-up."
+  },
+  "pickystory": {
+    "name": "PickyStory",
+    "cat": "Product Bundles",
+    "status": "Active",
+    "what": "Product bundling and upsell tool on the Shopify store.",
+    "connections": [
+      [
+        "Shopify",
+        "Bundle configuration"
+      ]
+    ],
+    "owner": "Alen in-house",
+    "notes": "Low priority for ramp-up."
+  },
+  "affirm": {
+    "name": "Affirm",
+    "cat": "Buy Now Pay Later",
+    "status": "Active",
+    "what": "BNPL at checkout. Integrated through Shopify.",
+    "connections": [
+      [
+        "Shopify",
+        "BNPL checkout option"
+      ]
+    ],
+    "owner": "Alen in-house",
+    "notes": "Unclear if direct Klaviyo integration is needed — already working through Shopify."
+  },
+  "rebuy": {
+    "name": "Rebuy",
+    "cat": "Smart Cart & Product Upsell",
+    "status": "Active",
+    "what": "Smart-cart and product-upsell engine running in the cart and checkout experience (in-cart suggestions, post-purchase offers / cross-sell).",
+    "connections": [
+      [
+        "Shopify",
+        "Runs in cart & checkout"
+      ]
+    ],
+    "owner": "Alen in-house (Winston). Improving supports site code.",
+    "notes": "Added to the diagram after the May QBR — it was already live but missing here. Operates on-site, not on the retention side. Winston wants to do more post-purchase with it; flagged as a backlog priority (May 15). Joey: low priority for retention, but it may surface useful next-best-cross-sell signal. Watch for whether any Rebuy data can feed Klaviyo cross-sell logic."
+  },
+  "recart": {
+    "name": "Recart",
+    "cat": "Cart / SMS Recovery",
+    "status": "Pending — under review",
+    "what": "Cart-abandonment / SMS recovery tool. Surfaced on an implementation list during the May QBR. Function overlaps with tools already in the stack.",
+    "connections": [
+      [
+        "Shopify",
+        "Would run on cart / checkout (if kept)"
+      ]
+    ],
+    "owner": "Unclear — TBC with Winston",
+    "notes": "May 26 QBR: Joey asked \"what is Recart?\" and Winston said it \"should be taken out\" — Alex noted it is similar to Rebuy (smart cart) and to Postscript (SMS), so it likely overlaps with what is already running. Added here as PENDING so it is not lost: decision needed — confirm whether any active Recart implementation exists and either remove it or define a distinct role. Low priority."
+  },
+  "sensit": {
+    "name": "Sensit",
+    "cat": "Under Evaluation",
+    "status": "Under evaluation",
+    "what": "New tool that Alex (Alexandra Palau, strategist) wants to trial on the Alen account. Flagged during the May 26 QBR as something she planned to introduce / demo. Specific capability still to be detailed.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Prospective — role/integration TBC"
+      ]
+    ],
+    "owner": "Alex (Flowium) — championing the evaluation.",
+    "notes": "Surfaced in the May QBR (initially mis-transcribed as \"Sunsite\"). Currently under evaluation — Alex wants to use it on the account but the exact function, pricing and integration are not yet defined. Action: have Alex share what Sensit does + a demo/URL, then scope a POC and decide. No commercials yet."
+  },
+  "arcady": {
+    "name": "Arcady",
+    "cat": "AI Tool (evaluation)",
+    "status": "Pending — POC needed",
+    "what": "An AI marketing tool Joey flagged as worth evaluating. Recognized / awarded by Klaviyo with a strong client reference list, which gave it extra credibility over a generic AI vendor. Correct name confirmed as \"Arcady\" (earlier transcripts mis-heard it as \"Arcady\").",
+    "connections": [
+      [
+        "Klaviyo",
+        "Prospective — Klaviyo-ecosystem AI tool (TBC)"
+      ]
+    ],
+    "owner": "Winston to get details/URL from Joey; Alex + Carla to evaluate.",
+    "notes": "May QBR + May 21 call: a POC is needed for Arcady. Winston sent a URL; The name was initially unclear in the calls (mis-heard as \"Arcady\") — now confirmed as Arcady. Action: Winston to pass the specific tool/URL, then Alex/Carla run a POC. No commercials or integration yet."
+  },
+  "klaviyo": {
+    "name": "Klaviyo",
+    "cat": "Email Marketing Hub (Nerve Center)",
+    "status": "Active",
+    "what": "The central platform. All email flows, campaigns, segments, embedded forms, and analytics. Connected to nearly every other tool. Also houses Erik's custom \"checkout-only revenue\" metric, which is critical for accurate attribution.",
+    "connections": [
+      [
+        "Shopify",
+        "Bidirectional sync — orders, products, customers"
+      ],
+      [
+        "Digioh",
+        "Receives form submissions via integration pipelines"
+      ],
+      [
+        "Yotpo",
+        "Receives loyalty events as flow triggers"
+      ],
+      [
+        "Segment Ninja",
+        "Receives PRIZM demographic data on profiles"
+      ],
+      [
+        "Mercana",
+        "Receives enrichment tags via API"
+      ],
+      [
+        "Triple Whale",
+        "Receives Sonar event attribution data"
+      ],
+      [
+        "Fairing",
+        "Receives post-purchase survey responses"
+      ],
+      [
+        "Retention.com",
+        "Receives identified anonymous visitor data"
+      ],
+      [
+        "Recharge",
+        "Receives subscription events"
+      ],
+      [
+        "Orita",
+        "Sends audience data → Orita optimizes who receives each campaign"
+      ],
+      [
+        "Maverick",
+        "Sends email data → Maverick optimizes HTML and send timing"
+      ],
+      [
+        "Postscript",
+        "Shares subscriber data for SMS coordination"
+      ],
+      [
+        "Post Pilot",
+        "Sends segments to trigger postcards; NEW — receives postcard-delivery events to trigger flows (pending)"
+      ],
+      [
+        "Meta",
+        "Pushes audience segments for ad retargeting"
+      ]
+    ],
+    "owner": "Flowium team. Was Erik → now you.",
+    "notes": "You have access. CRITICAL: Find Erik's checkout-only revenue metric before touching any reports. Standard Klaviyo revenue includes Recharge subscription renewals, which inflates numbers. Joey and Winston expect the isolated metric."
+  },
+  "zendesk": {
+    "name": "Zendesk",
+    "cat": "Customer Support",
+    "status": "Active",
+    "what": "Customer support ticketing. Alen recently downsized their CX team.",
+    "connections": [
+      [
+        "Shopify",
+        "Customer data"
+      ]
+    ],
+    "owner": "Alen in-house",
+    "notes": "K:BOS recommended Klaviyo Customer Service Hub and AI Customer Agent integrations — could help offset the smaller CX team."
+  },
+  "orita": {
+    "name": "Orita",
+    "cat": "AI Send Optimization (Audience)",
+    "status": "Active — retained (May QBR)",
+    "what": "AI audience optimization. For each send, determines which subscribers are most likely to engage and suppresses low-propensity recipients. Reduces volume while maintaining or improving revenue.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Reads audience data, optimizes who receives each campaign"
+      ],
+      [
+        "Post Pilot",
+        "Erik suggested connecting for direct mail optimization"
+      ]
+    ],
+    "owner": "Ana Lozada-Smith (CSM), Steven Raquet (Agency CSM), Diana Zheng. ~$1,200/mo.",
+    "notes": "DECISION (May 26 QBR): continuing with Orita. ~1 month left on the 4-month pilot at QBR time. Winston: \"if I had to pick between Maverick and Orita, I would pick Orita.\" Especially values Orita's ~40k \"always-email\" segment that reliably responds without unsubscribing. Note Orita and Maverick do different jobs (who vs what/when), so they were never a true apples-to-apples test. Continue using the checkout-only revenue metric to evaluate."
+  },
+  "maverick": {
+    "name": "Maverick",
+    "cat": "AI Send Optimization (Content & Timing)",
+    "status": "Not renewing — dropping after pilot",
+    "what": "HTML rendering optimization and send-time optimization. Different from Orita: Orita picks WHO to send to, Maverick optimizes WHAT they see and WHEN. Official Klaviyo tech partner.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Optimizes email HTML and send timing per recipient"
+      ]
+    ],
+    "owner": "Pricing TBD — winding down",
+    "notes": "DECISION (May 26 QBR): leaning to NOT move forward with Maverick after the current agreement ends. Reasons: (1) Winston's deliverability concern — it effectively pipes mail to bypass spam filters, which makes him uneasy; (2) it runs a 4-way split, so while Maverick is active Alex can't A/B test anything else; (3) judged to be \"not providing as much value\" vs Orita. Was credited with helping primary-inbox placement. If revisited, must use checkout-only revenue metric."
+  },
+  "email": {
+    "name": "Email Campaigns",
+    "cat": "Outbound Channel",
+    "status": "Active",
+    "what": "The primary outbound channel. Campaigns and automated flows sent via Klaviyo. Includes lifecycle flows (welcome, post-purchase, win-back, sunset), campaigns (newsletters, sales, product launches), and universal blocks (currently Sentra cross-sell).",
+    "connections": [
+      [
+        "Klaviyo",
+        "Sent directly from Klaviyo"
+      ]
+    ],
+    "owner": "Flowium team",
+    "notes": "Campaign cadence audit was planned for March. Joey wants Sentra universal blocks in ALL customer emails for the next 2-3 months. Monthly report goes to Winston before the 3rd Thursday of each month."
+  },
+  "postscript": {
+    "name": "Postscript",
+    "cat": "SMS Marketing + SMS Opt-in Capture",
+    "status": "Active",
+    "what": "SMS platform — both a DATA-IN source and an OUTBOUND channel. Data In: runs its own SMS opt-in pop-ups/forms that collect subscribers (it took over SMS pop-ups, which overlaps with Digioh — clarify which forms live where). Outbound: SMS flows, campaigns and compliance. Migrated from Klaviyo SMS in March 2026 for better international rates, automations, and compliance tooling. (Shown in both columns for this reason.)",
+    "connections": [
+      [
+        "Klaviyo",
+        "Shares subscriber data"
+      ],
+      [
+        "Shopify",
+        "SMS consent at checkout"
+      ],
+      [
+        "Digioh",
+        "Planned: webhook for combined email+SMS opt-in (not yet live)"
+      ]
+    ],
+    "owner": "Was Erik — needs new owner",
+    "notes": "URGENT — Texas exclusion: ALL Texas recipients must be excluded from SMS sends (legal). Verify every active flow and campaign. TCPA compliance checklist was requested by Postscript — check completion status. UPDATE (May QBR): Postscript-vs-Klaviyo SMS comparison pushed to end of Q2 — last Klaviyo SMS was Mar 6, so wait for a full Q2 of Postscript data, then compare to Q2 2025 / Q1 2026 Klaviyo numbers (report in Q3). Postscript sends weekly metrics but has no historical Klaviyo visibility. Also note: Postscript has taken over SMS pop-ups — clarify overlap with Digioh forms."
+  },
+  "postpilot": {
+    "name": "Post Pilot",
+    "cat": "Direct Mail",
+    "status": "Active — but direct mail paused (budget)",
+    "what": "Physical postcards triggered by Klaviyo segments. Three strategies: (1) Retention — reactivate ~47k unsubscribed single-purifier owners, (2) Site retargeting via pixel, (3) Cold prospecting via Claritas/Segment Ninja data. NEW capability: Post Pilot launched direct-mail \"flows\" — postcard-delivery events are sent to Klaviyo so you can trigger Klaviyo flows when a card is received.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Sends segments to trigger mailings; NEW — postcard-delivery events flow back into Klaviyo to trigger flows (integration update pending)"
+      ],
+      [
+        "Segment Ninja",
+        "Claritas data builds prospecting lists"
+      ],
+      [
+        "Mercana",
+        "Mercana property segments + possible postcard design input"
+      ]
+    ],
+    "owner": "Kelly Barden (Post Pilot). Alen side: Horacio (on leave — covered by \"another Alexandra\").",
+    "notes": "UPDATE (May 26 QBR + May 29): First test mail (May 8 sale, to Erik/Mercana property-owner + unsubscribed segments) returned ~9x ROI — Joey caveat \"we stacked the deck\" (existing customers who had unsubscribed). Post Pilot just announced direct-mail FLOWS: delivery data → Klaviyo → trigger flows; Alex emailed them because that data is not visible in Klaviyo yet (waiting on the updated integration). BUDGET: only one more mailing approved right now — Winston wants to PAUSE direct mail and instead lean Mercana into the email side. Winston to tally the ~7-10 identified segments and confirm budget/owner with Horacio's cover before any further sends. Earlier annual-sale context: postcards need 5-7 business day lead time; Claritas cold-prospecting creative was never started."
+  },
+  "meta": {
+    "name": "Meta / Facebook",
+    "cat": "Ad Retargeting",
+    "status": "Active",
+    "what": "Ad platform. Veronica manages audience syncs from Klaviyo. Joey wants 70/30 spend split (retargeting vs prospecting) using PRIZM demographic data from Segment Ninja.",
+    "connections": [
+      [
+        "Klaviyo",
+        "Audience sync — engaged, unengaged, unsubscribed lists"
+      ],
+      [
+        "Segment Ninja",
+        "PRIZM data for demographic targeting"
+      ]
+    ],
+    "owner": "Veronica (retargeting syncs)",
+    "notes": "Erik was coordinating with Veronica on syncing email-unengaged and unsubscribed audiences to Meta for retargeting. This was on his open to-do list."
+  }
+};
+/* DATA_END — do not remove this marker */
+
+// ---- Editable fields: apply any saved edits to Owner / Handover notes ----
+const EDIT_KEY = 'alenEcosystemEdits';
+function loadEdits() {
+  try { return JSON.parse(localStorage.getItem(EDIT_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+function saveEdits(edits) {
+  try { localStorage.setItem(EDIT_KEY, JSON.stringify(edits)); } catch (e) {}
+}
+// Merge saved edits into the data object on load
+(function applyEdits() {
+  const edits = loadEdits();
+  Object.keys(edits).forEach(id => {
+    if (!data[id]) return;
+    if (edits[id].owner !== undefined) data[id].owner = edits[id].owner;
+    if (edits[id].notes !== undefined) data[id].notes = edits[id].notes;
+  });
+})();
+let currentId = null;
+
+// Click handling
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('click', () => {
+    const id = card.dataset.id;
+    const d = data[id];
+    if (!d) return;
+
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    currentId = id;
+
+    document.getElementById('d-name').textContent = d.name;
+    document.getElementById('d-cat').textContent = d.cat;
+    document.getElementById('d-what').textContent = d.what;
+    document.getElementById('d-status').textContent = d.status;
+    document.getElementById('d-owner').textContent = d.owner;
+    document.getElementById('d-notes').textContent = d.notes;
+
+    const connList = document.getElementById('d-conn');
+    connList.innerHTML = '';
+    d.connections.forEach(([target, desc]) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${target}</strong> <span>— ${desc}</span>`;
+      connList.appendChild(li);
+    });
+
+    document.getElementById('detail').classList.add('open');
+    document.getElementById('overlay').classList.add('open');
+  });
+});
+
+function closeDetail() {
+  document.getElementById('detail').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+// ---- Make Owner / Handover notes editable + persist ----
+function handleEdit(field) {
+  return function () {
+    if (!currentId) return;
+    const val = this.textContent.trim();
+    data[currentId][field] = val;          // update in-memory source of truth
+    const edits = loadEdits();
+    edits[currentId] = edits[currentId] || {};
+    edits[currentId][field] = val;         // remember locally until exported
+    saveEdits(edits);
+    showSaveHint();
+  };
+}
+['d-owner', 'd-notes'].forEach((elId, i) => {
+  const el = document.getElementById(elId);
+  el.setAttribute('contenteditable', 'true');
+  el.classList.add('editable');
+  el.addEventListener('blur', handleEdit(i === 0 ? 'owner' : 'notes'));
+});
+
+let hintTimer = null;
+function showSaveHint() {
+  const h = document.getElementById('save-hint');
+  h.style.opacity = '1';
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => { h.style.opacity = '0'; }, 2200);
+}
+
+// ---- Export: download an updated HTML file with edits baked in ----
+function exportHtml() {
+  closeDetail(); // reset panel/selection state so the saved file opens clean
+  // Serialize current data (includes any edits) back into the file between the markers
+  const dataStr = 'const data = ' + JSON.stringify(data, null, 2) + ';';
+  let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  // Replace everything between the DATA markers with the freshly serialized object
+  const re = /\/\* DATA_START[\s\S]*?\/\* DATA_END[^*]*\*\//;
+  const replacement = '/* DATA_START — do not remove this marker (used by the Save/Export button) */\n'
+    + dataStr + '\n/* DATA_END — do not remove this marker */';
+  html = html.replace(re, replacement);
+  // Strip the contenteditable attributes that the browser baked into the live DOM,
+  // so the downloaded file starts clean (they get re-added by script on load anyway)
+  html = html.replace(/\scontenteditable="true"/g, '').replace(/\sclass="editable"/g, '');
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'alen-tech-ecosystem.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+document.getElementById('export-btn').addEventListener('click', exportHtml);
+</script>
+
+
+</body></html>
