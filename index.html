@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alen Tech Ecosystem — Data Flow</title>
+<style>
+  /* ============================================================
+     Alen brand theme  ·  alen.com
+     Light, airy "clean air" look — navy + teal on soft white
+     ============================================================ */
+  :root {
+    --bg:        #eef4f6;
+    --bg-2:      #e2edf0;
+    --surface:   #ffffff;
+    --surface-2: #f6fafb;
+    --line:      #dbe6ea;
+    --line-2:    #c9d8de;
+    --navy:      #0E2A47;
+    --navy-2:    #103a5c;
+    --ink:       #243b4d;
+    --ink-soft:  #5d7383;
+    --muted:     #93a6b0;
+    --teal:      #1FA89B;
+    --teal-deep: #127A70;
+    --teal-soft: #e4f4f1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    color: var(--ink);
+    min-height: 100vh; padding: 30px 40px 90px;
+    overflow-x: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1 { font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 3px; letter-spacing: -0.2px; }
+  .subtitle { font-size: 12px; color: var(--ink-soft); margin-bottom: 16px; }
+  #changelog {
+    font-size: 11px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-left: 3px solid var(--teal);
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 26px;
+    max-width: 1180px; line-height: 1.55;
+    box-shadow: 0 1px 3px rgba(14,42,71,0.04);
+  }
+  #changelog:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 2px rgba(31,168,155,0.15); }
+  #changelog strong { color: var(--teal-deep); }
+
+  /* ---- alen.com branding ---- */
+  .brandbar { display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(120deg,var(--navy) 0%,var(--navy-2) 60%,var(--teal-deep) 135%);
+    border-radius:12px; padding:16px 24px; margin-bottom:20px;
+    box-shadow:0 6px 20px rgba(14,42,71,0.18); }
+  .brandbar .wm { font-size:24px; font-weight:800; color:#fff; letter-spacing:0.5px; }
+  .brandbar .wm sup { color:#7fe0d4; font-size:11px; top:-0.8em; }
+  .brandbar .brand-tag { margin-left:14px; font-size:9px; letter-spacing:3px; color:#cfeee9;
+    text-transform:uppercase; border-left:1px solid rgba(255,255,255,.28); padding-left:14px; }
+  .brandbar .brand-right { font-size:12px; font-weight:700; letter-spacing:2px; color:#8fe6da; }
+  .brandfoot { margin-top:26px; padding-top:12px; border-top:1px solid var(--line);
+    font-size:10px; color:var(--muted); display:flex; justify-content:space-between; max-width:1200px; }
+  .brandfoot b { color:var(--teal-deep); font-weight:700; }
+
+  /* ---- Toolbar ---- */
+  #toolbar {
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin-bottom:18px; max-width:1180px;
+  }
+  .tbtn {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--surface); color:var(--navy); border:1px solid var(--line-2);
+    border-radius:9px; padding:8px 14px; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .15s; box-shadow:0 1px 2px rgba(14,42,71,0.05);
+  }
+  .tbtn:hover { border-color:var(--teal); color:var(--teal-deep); }
+  .tbtn.primary { background:var(--teal); color:#fff; border-color:var(--teal-deep); }
+  .tbtn.primary:hover { background:var(--teal-deep); color:#fff; }
+  .tbtn.add { background:var(--navy); color:#fff; border-color:var(--navy); }
+  .tbtn.add:hover { background:var(--navy-2); color:#fff; }
+  #dirty-dot { width:8px; height:8px; border-radius:50%; background:#e0a52a; display:none; }
+  .tbtn.primary.dirty #dirty-dot { display:inline-block; }
+  #status-text { font-size:11px; color:var(--ink-soft); margin-left:4px; }
+
+  /* ---- Flow layout ---- */
+  .flow { display:flex; gap:16px; align-items:flex-start; min-width:1200px; position:relative; }
+
+  .col {
+    display:flex; flex-direction:column; gap:10px; flex-shrink:0;
+    min-width:172px; border-radius:14px; padding:4px; transition:background .15s;
+  }
+  .col.drag-over { background:rgba(31,168,155,0.07); outline:2px dashed var(--teal); outline-offset:-2px; }
+  .col-header {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.4px;
+    color:var(--teal-deep); text-align:center; padding-bottom:8px;
+    border-bottom:1px solid var(--line-2); margin-bottom:4px;
+  }
+
+  .arrow-col {
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding-top:40px; flex-shrink:0; width:48px; align-self:stretch;
+  }
+  .arrow-col svg { opacity:0.55; }
+  .arrow-col .sync { font-size:9px; color:var(--teal); margin-top:4px; text-align:center; opacity:0.7; }
+
+  /* Cards */
+  .card {
+    border-radius:12px; padding:12px 16px; cursor:pointer;
+    transition:transform .15s, box-shadow .15s, border-color .15s, opacity .15s;
+    border:1px solid var(--line); background:var(--surface);
+    width:170px; position:relative; box-shadow:0 1px 3px rgba(14,42,71,0.05);
+  }
+  .card:hover { transform:translateY(-2px); border-color:var(--teal); box-shadow:0 6px 18px rgba(31,168,155,0.18); }
+  .card.selected { border-color:var(--teal); box-shadow:0 0 0 2px rgba(31,168,155,0.25), 0 6px 18px rgba(31,168,155,0.18); }
+  .card.dragging { opacity:0.4; }
+  .card h3 { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:2px; padding-right:14px; }
+  .card .role { font-size:10px; color:var(--ink-soft); line-height:1.4; }
+  .card .badge {
+    position:absolute; top:8px; right:8px; font-size:8px; font-weight:700;
+    padding:2px 6px; border-radius:6px; text-transform:uppercase; letter-spacing:0.3px;
+  }
+  .card .grip {
+    position:absolute; bottom:7px; right:9px; color:var(--muted); font-size:10px;
+    letter-spacing:-1px; opacity:0; transition:opacity .15s;
+  }
+  .card:hover .grip { opacity:0.6; }
+  .badge-active  { background:var(--teal-soft); color:var(--teal-deep); }
+  .badge-eval    { background:#fdf1df; color:#b07614; }
+  .badge-trial   { background:#fde7e4; color:#cf4537; }
+  .badge-removed { background:#eaeef1; color:#8a99a4; }
+  .badge-pending { background:#e6f0fa; color:#2c6db1; }
+  .card.pending  { border-style:dashed; border-color:var(--line-2); }
+  .card.removed  { opacity:0.62; background:var(--surface-2); }
+  .card.removed h3 { text-decoration:line-through; text-decoration-color:var(--muted); }
+
+  .hub {
+    width:200px; padding:20px;
+    background:linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+    border-color:transparent; box-shadow:0 8px 22px rgba(14,42,71,0.22);
+  }
+  .hub h3 { font-size:16px; color:#fff; }
+  .hub .role { font-size:11px; color:#c7d8e2; }
+  .hub.accent-klaviyo { width:220px; padding:24px; background:linear-gradient(135deg,#0E2A47 0%,#127A70 140%); }
+  .card.accent-email { border-color:var(--teal); }
+  .card.accent-email h3 { color:var(--teal-deep); }
+
+  .group {
+    border:1px solid var(--line); background:rgba(255,255,255,0.45);
+    border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px;
+    transition:background .15s, outline .15s;
+  }
+  .group.drag-over { background:rgba(31,168,155,0.10); outline:2px dashed var(--teal); outline-offset:-2px; }
+  .group-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); text-align:center; }
+  .group .card { width:148px; }
+  .col-note {
+    font-size:9px; color:var(--teal-deep); text-align:center; padding:7px 8px;
+    border:1px solid var(--teal); background:var(--teal-soft); border-radius:8px;
+  }
+
+  /* Detail / edit panel */
+  #detail {
+    position:fixed; right:-460px; top:0; width:440px; height:100vh;
+    background:var(--surface); border-left:1px solid var(--line);
+    padding:24px 24px 40px; overflow-y:auto; z-index:200;
+    transition:right .3s ease; box-shadow:-12px 0 30px rgba(14,42,71,0.10);
+  }
+  #detail.open { right:0; }
+  #detail .panel-title { font-size:12px; font-weight:700; color:var(--teal-deep); text-transform:uppercase; letter-spacing:1px; margin-bottom:18px; }
+  #detail .close-btn {
+    position:absolute; top:16px; right:16px; background:var(--surface-2);
+    border:1px solid var(--line); color:var(--ink-soft); width:28px; height:28px;
+    border-radius:8px; font-size:16px; cursor:pointer; display:flex;
+    align-items:center; justify-content:center;
+  }
+  #detail .close-btn:hover { color:var(--navy); border-color:var(--teal); }
+  .field { margin-bottom:14px; }
+  .field label { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); display:block; margin-bottom:5px; font-weight:700; }
+  .field input, .field select, .field textarea {
+    width:100%; font-family:inherit; font-size:13px; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--line-2); border-radius:8px;
+    padding:8px 10px; transition:border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline:none; border-color:var(--teal); background:#fff; box-shadow:0 0 0 2px rgba(31,168,155,0.15);
+  }
+  .field textarea { resize:vertical; line-height:1.5; }
+  .field .hint { font-size:9px; color:var(--muted); margin-top:4px; font-weight:400; text-transform:none; letter-spacing:0; }
+  .field-row { display:flex; gap:10px; }
+  .field-row .field { flex:1; }
+  .checkrow { display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+  .checkrow input { width:auto; }
+  .checkrow label { margin:0; }
+  .panel-actions { display:flex; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+  .btn-del { background:#fdecea; color:#cf4537; border:1px solid #f3c6c0; border-radius:8px; padding:9px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .btn-del:hover { background:#f9ddd9; }
+  .btn-done { background:var(--teal); color:#fff; border:1px solid var(--teal-deep); border-radius:8px; padding:9px 16px; font-size:12px; font-weight:700; cursor:pointer; margin-left:auto; }
+  .btn-done:hover { background:var(--teal-deep); }
+
+  /* Legend */
+  #legend {
+    position:fixed; bottom:16px; right:16px; background:var(--surface);
+    border:1px solid var(--line); border-radius:10px; padding:10px 14px; z-index:50;
+    font-size:10px; color:var(--ink-soft); box-shadow:0 4px 14px rgba(14,42,71,0.10);
+  }
+  #legend .row { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+  #legend .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* Modal (settings) */
+  #overlay { display:none; position:fixed; inset:0; background:rgba(14,42,71,0.18); z-index:150; }
+  #overlay.open { display:block; }
+  #modal {
+    display:none; position:fixed; z-index:210; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:460px; max-width:92vw; max-height:88vh; overflow-y:auto;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:26px 26px 22px; box-shadow:0 24px 60px rgba(14,42,71,0.28);
+  }
+  #modal.open { display:block; }
+  #modal h2 { font-size:17px; color:var(--navy); margin-bottom:4px; }
+  #modal .sub { font-size:11px; color:var(--ink-soft); margin-bottom:18px; line-height:1.5; }
+  #modal .sub a { color:var(--teal-deep); }
+  #modal .note { font-size:10px; color:var(--muted); background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin-top:6px; line-height:1.5; }
+
+  /* Toast */
+  #toast {
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy); color:#fff; font-size:12px; font-weight:600;
+    padding:11px 18px; border-radius:10px; z-index:300; opacity:0;
+    transition:opacity .25s, transform .25s; pointer-events:none; box-shadow:0 8px 24px rgba(14,42,71,0.3);
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #toast.err { background:#cf4537; }
+</style>
+</head>
+<body>
+
+<div class="brandbar">
+  <div><span class="wm">alen<sup>&reg;</sup></span><span class="brand-tag">Air Purifiers &nbsp;·&nbsp; Tech Ecosystem</span></div>
+  <div class="brand-right">alen.com</div>
+</div>
+
+<h1>Alen Tech Ecosystem — Data Flow</h1>
+<p class="subtitle">Left to right: how data moves from customer touchpoints through to outbound channels. Click a card to edit · drag cards to move them · use <b>+ Add tool</b> to add one. <span id="updated-text"></span></p>
+
+<div id="toolbar">
+  <button class="tbtn add" id="add-btn">+ Add tool</button>
+  <button class="tbtn primary" id="save-btn"><span id="dirty-dot"></span> Save to GitHub</button>
+  <button class="tbtn" id="reload-btn">↻ Reload</button>
+  <button class="tbtn" id="export-btn">⬇ Export JSON</button>
+  <button class="tbtn" id="settings-btn">⚙ Settings</button>
+  <span id="status-text"></span>
+</div>
+
+<div id="changelog" contenteditable="true" spellcheck="false"></div>
+
+<div class="flow" id="flow"></div>
+
+<div class="brandfoot">
+  <span>Alen<b>&reg;</b> &nbsp;·&nbsp; Retention &amp; Lifecycle Tech Map</span>
+  <span>Internal reference &nbsp;·&nbsp; alen.com</span>
+</div>
+
+<!-- Legend -->
+<div id="legend">
+  <div class="row"><div class="dot" style="background:#1FA89B"></div> Active / retained</div>
+  <div class="row"><div class="dot" style="background:#b07614"></div> Under evaluation</div>
+  <div class="row"><div class="dot" style="background:#cf4537"></div> New / trial</div>
+  <div class="row"><div class="dot" style="background:#2c6db1"></div> Pending / POC</div>
+  <div class="row"><div class="dot" style="background:#93a6b0"></div> Discontinued</div>
+</div>
+
+<!-- Overlay + modal -->
+<div id="overlay"></div>
+<div id="modal">
+  <h2>GitHub sync settings</h2>
+  <p class="sub">Edits are saved to a <b>data.json</b> file in your repo, so everyone sharing the URL sees the same thing. Paste a GitHub token below (stored only in your browser) so this page can save on your behalf.</p>
+  <div class="field"><label>Repo owner (user or org)</label><input id="s-owner" placeholder="e.g. alen-marketing"></div>
+  <div class="field"><label>Repository name</label><input id="s-repo" placeholder="e.g. tech-ecosystem"></div>
+  <div class="field-row">
+    <div class="field"><label>Branch</label><input id="s-branch" placeholder="main"></div>
+    <div class="field"><label>Data file path</label><input id="s-path" placeholder="data.json"></div>
+  </div>
+  <div class="field"><label>GitHub token (kept in this browser only)</label><input id="s-token" type="password" placeholder="github_pat_…">
+    <div class="note">Create a <b>fine-grained personal access token</b> at github.com → Settings → Developer settings → Fine-grained tokens. Give it <b>Contents: Read and write</b> on this one repo. Paste it here. It is stored only in your browser's local storage and never committed.</div>
+  </div>
+  <div class="panel-actions">
+    <button class="btn-del" id="s-clear" style="background:var(--surface-2);color:var(--ink-soft);border-color:var(--line-2);">Clear token</button>
+    <button class="btn-done" id="s-save">Save settings</button>
+  </div>
+</div>
+
+<!-- Detail / edit panel -->
+<div id="detail">
+  <button class="close-btn" onclick="closePanel()">&times;</button>
+  <div class="panel-title" id="panel-title">Edit tool</div>
+  <div class="field"><label>Name</label><input id="f-name"></div>
+  <div class="field"><label>Category / subtitle</label><input id="f-cat"></div>
+  <div class="field-row">
+    <div class="field"><label>Status</label>
+      <select id="f-status">
+        <option value="active">Active</option>
+        <option value="eval">Under evaluation</option>
+        <option value="trial">New / trial</option>
+        <option value="pending">Pending / POC</option>
+        <option value="removed">Discontinued</option>
+      </select>
+    </div>
+    <div class="field"><label>Badge label</label><input id="f-badge" placeholder="auto"><div class="hint">Leave blank for default</div></div>
+  </div>
+  <div class="field"><label>Short role (shown on card)</label><textarea id="f-role" rows="2"></textarea><div class="hint">Use new lines for breaks</div></div>
+  <div class="field-row">
+    <div class="field"><label>Column</label><select id="f-column"></select></div>
+    <div class="field"><label>Group</label><select id="f-group"></select></div>
+  </div>
+  <div class="checkrow"><input type="checkbox" id="f-hub"><label for="f-hub">Show as large hub card</label></div>
+  <div class="field"><label>What it does</label><textarea id="f-what" rows="4"></textarea></div>
+  <div class="field"><label>Status detail</label><input id="f-statustext"></div>
+  <div class="field"><label>Data flows to / from</label><textarea id="f-conn" rows="4"></textarea><div class="hint">One per line: <b>Target — description</b></div></div>
+  <div class="field"><label>Owner / contacts</label><textarea id="f-owner" rows="2"></textarea></div>
+  <div class="field"><label>Handover notes</label><textarea id="f-notes" rows="6"></textarea></div>
+  <div class="panel-actions">
+    <button class="btn-del" id="f-delete">Delete tool</button>
+    <button class="btn-done" onclick="closePanel()">Done</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   Alen Tech Ecosystem — editable, GitHub-synced
+   ============================================================ */
+
+/* --- Repo defaults: a maintainer can hard-code these once so
+       teammates only need to add a token (via ⚙ Settings).
+       Or leave blank and configure everything in Settings.    --- */
+const GH_DEFAULTS = { owner: 'Access-Flowium', repo: 'alen-techstack', branch: 'main', path: 'data.json' };
+
+/* Column structure (left → right). Groups are optional sub-zones. */
+const COLUMNS = [
+  { id:'datain',   title:'Data In',  groups:['Visitor Identification','Enrichment','Attribution'] },
+  { id:'store',    title:'Store',    groups:['Shopify Apps'] },
+  { id:'hub',      title:'Hub',      groups:[] },
+  { id:'optimize', title:'Optimize', groups:['AI Send Optimization','Evaluating / Pending'] },
+  { id:'outbound', title:'Outbound', groups:[] },
+];
+/* Static annotation rendered after a given column:group */
+const COL_NOTES = { 'optimize::AI Send Optimization': 'Decision (May QBR): continue Orita, do not renew Maverick after pilot.' };
+
+const DEFAULT_BADGE = { active:'Active', eval:'Eval', trial:'Trial', pending:'Pending', removed:'Discontinued' };
+
+/* --- Seed data (used until data.json exists / loads) --- */
+const DEFAULT_MODEL = {
+  meta: {
+    updated: 'Updated May 29, 2026 (from May QBR & weekly calls)',
+    changelog: '<strong>Recent changes (May 2026):</strong> Orita retained · Maverick not renewing after pilot · Mercana moved to active (credit pricing) · Retention.com confirmed discontinued · Rebuy added (smart cart) · Arcady &amp; Recart added as pending · Sensit added under evaluation · Post Pilot: new DM-triggered flows, but paused (budget).'
+  },
+  items: [
+    { id:'retention', column:'datain', group:'Visitor Identification', statusType:'removed', badge:'Discontinued',
+      name:'Retention.com', cat:'Visitor Identification', role:'Anonymous visitor ID\nTurned off — segment archived',
+      statustext:'Discontinued (turned off last year)',
+      what:'Identified anonymous website visitors and matched them to known email profiles for outreach. No longer in use.',
+      connections:[['Klaviyo','Previously pushed identified visitor data into Klaviyo profiles']],
+      owner:'N/A — discontinued',
+      notes:'May 26 QBR: Joey confirmed Retention.com was turned off last year — analysis showed it added very few people to the list. Alex is archiving the leftover Retention.com segments still sitting in Klaviyo (archiving, not deleting). Kept on the diagram for history; no longer active.' },
+
+    { id:'digioh', column:'datain', group:'Visitor Identification', statusType:'active', badge:'',
+      name:'Digioh', cat:'Opt-in Forms & Product Quiz', role:'Popups, forms, quiz\n(email capture)',
+      statustext:'Active',
+      what:'Powers all opt-in popups, exit-intent forms, and the product recommendation quiz on alen.com. Replaced Amped (acquired by Mailchimp). Better at targeting anonymous visitors than alternatives.',
+      connections:[['Klaviyo','Form submissions subscribe to lists via "integration pipelines"'],['Postscript','Planned: webhook to trigger SMS opt-in after email capture (not yet launched)']],
+      owner:'Askari (technical), strategy was Erik',
+      notes:'Winston asked (Apr 9) whether Digioh is still needed since Postscript rebuilt popups. Erik’s position: keep it for quiz + anonymous targeting. Head-to-head test was planned but never executed before his departure. Integration uses "pipelines" — each form maps to a Klaviyo list. 8+ active forms plus UTM-targeted variants.' },
+
+    { id:'postscript', column:'datain', group:'Visitor Identification', statusType:'active', badge:'',
+      name:'Postscript', cat:'SMS Opt-in Capture', role:'SMS opt-in forms & popups\n(SMS capture)',
+      statustext:'Active',
+      what:'SMS platform — DATA-IN side. Runs its own SMS opt-in pop-ups/forms that collect subscribers (it took over SMS pop-ups, which overlaps with Digioh — clarify which forms live where).',
+      connections:[['Klaviyo','Shares subscriber data'],['Shopify','SMS consent at checkout'],['Digioh','Planned: webhook for combined email+SMS opt-in (not yet live)']],
+      owner:'Was Erik — needs new owner',
+      notes:'See the outbound "Postscript" card for the full SMS-marketing notes. Note: Postscript has taken over SMS pop-ups — clarify overlap with Digioh forms.' },
+
+    { id:'segmentninja', column:'datain', group:'Enrichment', statusType:'active', badge:'',
+      name:'Segment Ninja', cat:'PRIZM Demographic Enrichment', role:'Claritas PRIZM data',
+      statustext:'Active',
+      what:'Appends Claritas PRIZM household data to Klaviyo profiles — home value, household size, income, lifestyle clusters (Country Squires, Network Neighbors, Middleburg Managers). Household-level, not individual.',
+      connections:[['Klaviyo','Profile data enrichment (appended properties)'],['Post Pilot','Builds prospecting segments for direct mail'],['Meta','PRIZM data for ad retargeting (Joey wants 70/30 retarget/prospect split)']],
+      owner:'Jim Kalogerakos (jimk@statanalytics.ca) — free beta access',
+      notes:'~$165 + 155k profile credits through end of 2026. Erik was running backfill of all single-purifier purchasers. Target: 4+ bedrooms, 2,500+ sqft = multi-purifier candidates. This data feeds Post Pilot prospecting lists for the May 21-29 annual sale.' },
+
+    { id:'mercana', column:'datain', group:'Enrichment', statusType:'active', badge:'',
+      name:'Mercana', cat:'AI Individual Enrichment', role:'AI individual enrichment\nCredit-based pricing',
+      statustext:'Active — credit-based pricing',
+      what:'AI-powered individual customer enrichment — home value (Redfin), bedrooms, occupation, interests, social. Much more granular than Claritas.',
+      connections:[['Klaviyo','Enrichment via tags + API key'],['Segment Ninja','Complements (not replaces) PRIZM household data — individual-level layer']],
+      owner:'Daniel & Vijay at Mercana. Credit-based pricing (enrichment credits).',
+      notes:'May 29 Mercana sync: moving forward and being integrated into the segmentation strategy. Alex weaves Mercana segments into June/July campaigns and into the highest-producing flows first. Pricing is credit-based, so be mindful of enrichment volume. Key finding: many healthcare professionals → B2B angle. Horacio also exploring Mercana for postcard design.' },
+
+    { id:'fairing', column:'datain', group:'Attribution', statusType:'active', badge:'',
+      name:'Fairing', cat:'Post-Purchase Surveys', role:'Post-purchase surveys',
+      statustext:'Active',
+      what:'Post-purchase attribution surveys ("How did you hear about us?"). Response data feeds into Klaviyo profiles for segmentation.',
+      connections:[['Shopify','Survey displayed post-checkout'],['Klaviyo','Survey response data on profiles']],
+      owner:'Unknown — check access',
+      notes:'Listed in original tech stack integration list.' },
+
+    { id:'triplewhale', column:'datain', group:'Attribution', statusType:'active', badge:'',
+      name:'Triple Whale', cat:'Analytics & Attribution', role:'Sonar event attribution',
+      statustext:'Active',
+      what:'Analytics and attribution platform. Sonar feature enriches Klaviyo with event-level attribution data.',
+      connections:[['Klaviyo','Sonar data enrichment']],
+      owner:'Unknown — check access',
+      notes:'Sonar integration feeds event data into Klaviyo.' },
+
+    { id:'shopify', column:'store', group:'', hub:true, statusType:'active', badge:'',
+      name:'Shopify Plus', cat:'E-Commerce Storefront', role:'E-commerce storefront. Orders, products, customers, checkout.',
+      statustext:'Active',
+      what:'The store. All product data, orders, customer records, and checkout flow live here. Shopify Plus tier enables checkout extensibility (SMS consent collection, Shopify Scripts).',
+      connections:[['Klaviyo','Bidirectional sync — orders, products, customers'],['Recharge','Subscription billing for filters'],['Yotpo','Loyalty widget on storefront'],['Postscript','SMS consent collection at checkout'],['Affirm','BNPL checkout option'],['PickyStory','Product bundling'],['Shogun','Page builder']],
+      owner:'Alen in-house. Improving (dev team) handles code changes.',
+      notes:'Source of truth for all order/product data. Always coordinate with the Improving team for any storefront code changes (theme updates, reward tiers, etc.).' },
+
+    { id:'recharge', column:'store', group:'Shopify Apps', statusType:'active', badge:'',
+      name:'Recharge', cat:'Subscription Management', role:'Filter subscriptions',
+      statustext:'Active',
+      what:'Manages filter replacement subscriptions. Subscription renewal orders flow into Klaviyo, which is why campaign revenue can look inflated if you don’t isolate checkout-only revenue.',
+      connections:[['Shopify','Subscription billing'],['Klaviyo','Subscription events (renewal, cancellation, etc.)']],
+      owner:'Alen in-house',
+      notes:'This is why Erik created the "checkout-only revenue" custom metric in Klaviyo. Without it, standard revenue metrics include auto-renewals, making campaign attribution unreliable.' },
+
+    { id:'yotpo', column:'store', group:'Shopify Apps', statusType:'active', badge:'',
+      name:'Yotpo', cat:'Loyalty & Rewards', role:'Loyalty & rewards',
+      statustext:'Active',
+      what:'Loyalty program AND product/site reviews. 600 pts = free Sentra starter kit ($30 value). 200 pts = free shipping. Points stack with sale discounts (Joey confirmed Apr 17).',
+      connections:[['Shopify','Rewards widget on store'],['Klaviyo','Loyalty events trigger flows; some Yotpo emails to be moved into Klaviyo']],
+      owner:'CSM: Nicole (Miguel rolled off). Improving implements reward tiers.',
+      notes:'UPDATE (May calls): Yotpo currently sends its OWN loyalty/review emails — Alex wants an audit to move some sends into Klaviyo for more control + cleaner metrics. Open question: confirm what review collection is handled by Yotpo vs Klaviyo. 600-pt Sentra + 200-pt free-shipping rewards live.' },
+
+    { id:'shogun', column:'store', group:'Shopify Apps', statusType:'active', badge:'',
+      name:'Shogun', cat:'Page Builder', role:'Page builder',
+      statustext:'Active',
+      what:'Landing page and content page builder for the Shopify store.',
+      connections:[['Shopify','Page builder overlay']],
+      owner:'Alen in-house / Improving',
+      notes:'Used for landing pages. Low priority for ramp-up.' },
+
+    { id:'pickystory', column:'store', group:'Shopify Apps', statusType:'active', badge:'',
+      name:'PickyStory', cat:'Product Bundles', role:'Product bundles',
+      statustext:'Active',
+      what:'Product bundling and upsell tool on the Shopify store.',
+      connections:[['Shopify','Bundle configuration']],
+      owner:'Alen in-house',
+      notes:'Low priority for ramp-up.' },
+
+    { id:'affirm', column:'store', group:'Shopify Apps', statusType:'active', badge:'',
+      name:'Affirm', cat:'Buy Now Pay Later', role:'BNPL checkout',
+      statustext:'Active',
+      what:'BNPL at checkout. Integrated through Shopify.',
+      connections:[['Shopify','BNPL checkout option']],
+      owner:'Alen in-house',
+      notes:'Unclear if direct Klaviyo integration is needed — already working through Shopify.' },
+
+    { id:'rebuy', column:'store', group:'Shopify Apps', statusType:'active', badge:'',
+      name:'Rebuy', cat:'Smart Cart & Product Upsell', role:'Smart cart & upsell',
+      statustext:'Active',
+      what:'Smart-cart and product-upsell engine running in the cart and checkout experience.',
+      connections:[['Shopify','Runs in cart & checkout']],
+      owner:'Alen in-house (Winston). Improving supports site code.',
+      notes:'Added after the May QBR — already live but missing here. Operates on-site, not on the retention side. Winston wants more post-purchase with it. Watch for whether any Rebuy data can feed Klaviyo cross-sell logic.' },
+
+    { id:'recart', column:'store', group:'Shopify Apps', statusType:'pending', badge:'Pending',
+      name:'Recart', cat:'Cart / SMS Recovery', role:'Cart/SMS recovery\nUnder review — may overlap',
+      statustext:'Pending — under review',
+      what:'Cart-abandonment / SMS recovery tool. Surfaced on an implementation list during the May QBR. Function overlaps with tools already in the stack.',
+      connections:[['Shopify','Would run on cart / checkout (if kept)']],
+      owner:'Unclear — TBC with Winston',
+      notes:'May 26 QBR: Winston said it "should be taken out"; Alex noted it is similar to Rebuy and Postscript, so it likely overlaps. Decision needed — confirm whether any active Recart implementation exists. Low priority.' },
+
+    { id:'klaviyo', column:'hub', group:'', hub:true, accent:'klaviyo', statusType:'active', badge:'',
+      name:'Klaviyo', cat:'Email Marketing Hub (Nerve Center)', role:'Email marketing nerve center.\nFlows, campaigns, segments, forms, custom metrics.\n\nKEY: Checkout-only revenue metric — isolates real campaign revenue from Recharge renewals.',
+      statustext:'Active',
+      what:'The central platform. All email flows, campaigns, segments, embedded forms, and analytics. Connected to nearly every other tool. Houses Erik’s custom "checkout-only revenue" metric, which is critical for accurate attribution.',
+      connections:[['Shopify','Bidirectional sync — orders, products, customers'],['Digioh','Receives form submissions via integration pipelines'],['Yotpo','Receives loyalty events as flow triggers'],['Segment Ninja','Receives PRIZM demographic data on profiles'],['Mercana','Receives enrichment tags via API'],['Triple Whale','Receives Sonar event attribution data'],['Fairing','Receives post-purchase survey responses'],['Recharge','Receives subscription events'],['Orita','Sends audience data → Orita optimizes who receives each campaign'],['Postscript','Shares subscriber data for SMS coordination'],['Post Pilot','Sends segments to trigger postcards; receives postcard-delivery events (pending)'],['Meta','Pushes audience segments for ad retargeting']],
+      owner:'Flowium team. Was Erik → now you.',
+      notes:'CRITICAL: Find Erik’s checkout-only revenue metric before touching any reports. Standard Klaviyo revenue includes Recharge subscription renewals, which inflates numbers. Joey and Winston expect the isolated metric.' },
+
+    { id:'zendesk', column:'hub', group:'', statusType:'active', badge:'',
+      name:'Zendesk', cat:'Customer Support', role:'Customer support',
+      statustext:'Active',
+      what:'Customer support ticketing. Alen recently downsized their CX team.',
+      connections:[['Shopify','Customer data']],
+      owner:'Alen in-house',
+      notes:'K:BOS recommended Klaviyo Customer Service Hub and AI Customer Agent integrations — could help offset the smaller CX team.' },
+
+    { id:'orita', column:'optimize', group:'AI Send Optimization', statusType:'active', badge:'Retained',
+      name:'Orita', cat:'AI Send Optimization (Audience)', role:'WHO to send to.\nAudience selection.\n$1,200/mo — continuing',
+      statustext:'Active — retained (May QBR)',
+      what:'AI audience optimization. For each send, determines which subscribers are most likely to engage and suppresses low-propensity recipients. Reduces volume while maintaining or improving revenue.',
+      connections:[['Klaviyo','Reads audience data, optimizes who receives each campaign'],['Post Pilot','Erik suggested connecting for direct mail optimization']],
+      owner:'Ana Lozada-Smith (CSM), Steven Raquet (Agency CSM), Diana Zheng. ~$1,200/mo.',
+      notes:'DECISION (May 26 QBR): continuing with Orita. Winston: "if I had to pick between Maverick and Orita, I would pick Orita." Values Orita’s ~40k "always-email" segment. Continue using the checkout-only revenue metric to evaluate.' },
+
+    { id:'maverick', column:'optimize', group:'AI Send Optimization', statusType:'removed', badge:'Not renewing',
+      name:'Maverick', cat:'AI Send Optimization (Content & Timing)', role:'WHAT & WHEN to send.\nDropping after pilot ends',
+      statustext:'Not renewing — dropping after pilot',
+      what:'HTML rendering optimization and send-time optimization. Orita picks WHO to send to; Maverick optimizes WHAT they see and WHEN. Official Klaviyo tech partner.',
+      connections:[['Klaviyo','Optimizes email HTML and send timing per recipient']],
+      owner:'Pricing TBD — winding down',
+      notes:'DECISION (May 26 QBR): not moving forward after the current agreement ends. Reasons: Winston’s deliverability concern; the 4-way split blocks other A/B tests; judged "not providing as much value" vs Orita. If revisited, must use checkout-only revenue metric.' },
+
+    { id:'sensit', column:'optimize', group:'Evaluating / Pending', statusType:'eval', badge:'Eval',
+      name:'Sensit', cat:'Under Evaluation', role:'Under evaluation\nNew tool Alex wants to trial',
+      statustext:'Under evaluation',
+      what:'New tool that Alex (Alexandra Palau, strategist) wants to trial. Flagged during the May 26 QBR. Specific capability still to be detailed.',
+      connections:[['Klaviyo','Prospective — role/integration TBC']],
+      owner:'Alex (Flowium) — championing the evaluation.',
+      notes:'Surfaced in the May QBR. Action: have Alex share what Sensit does + a demo/URL, then scope a POC and decide. No commercials yet.' },
+
+    { id:'arcady', column:'optimize', group:'Evaluating / Pending', statusType:'pending', badge:'Pending',
+      name:'Arcady', cat:'AI Tool (evaluation)', role:'AI tool — POC needed\nKlaviyo-recognized',
+      statustext:'Pending — POC needed',
+      what:'An AI marketing tool Joey flagged as worth evaluating. Recognized / awarded by Klaviyo with a strong client reference list.',
+      connections:[['Klaviyo','Prospective — Klaviyo-ecosystem AI tool (TBC)']],
+      owner:'Winston to get details/URL from Joey; Alex + Carla to evaluate.',
+      notes:'May QBR + May 21 call: a POC is needed. Action: Winston to pass the specific tool/URL, then Alex/Carla run a POC. No commercials or integration yet.' },
+
+    { id:'email', column:'outbound', group:'', accent:'email', statusType:'active', badge:'',
+      name:'Email Campaigns', cat:'Outbound Channel', role:'Sent via Klaviyo.\nFlows + scheduled campaigns.',
+      statustext:'Active',
+      what:'The primary outbound channel. Campaigns and automated flows sent via Klaviyo. Includes lifecycle flows, campaigns, and universal blocks (currently Sentra cross-sell).',
+      connections:[['Klaviyo','Sent directly from Klaviyo']],
+      owner:'Flowium team',
+      notes:'Joey wants Sentra universal blocks in ALL customer emails for the next 2-3 months. Monthly report goes to Winston before the 3rd Thursday of each month.' },
+
+    { id:'postscript-out', column:'outbound', group:'', statusType:'active', badge:'',
+      name:'Postscript', cat:'SMS Marketing', role:'SMS marketing.\nMigrated from Klaviyo SMS\nMar 2026',
+      statustext:'Active',
+      what:'SMS platform — OUTBOUND side. SMS flows, campaigns and compliance. Migrated from Klaviyo SMS in March 2026 for better international rates, automations, and compliance tooling.',
+      connections:[['Klaviyo','Shares subscriber data'],['Shopify','SMS consent at checkout']],
+      owner:'Was Erik — needs new owner',
+      notes:'URGENT — Texas exclusion: ALL Texas recipients must be excluded from SMS sends (legal). Verify every active flow and campaign. TCPA compliance checklist requested by Postscript — check status. Postscript-vs-Klaviyo SMS comparison pushed to end of Q2 (last Klaviyo SMS was Mar 6).' },
+
+    { id:'postpilot', column:'outbound', group:'', statusType:'active', badge:'',
+      name:'Post Pilot', cat:'Direct Mail', role:'Direct mail postcards.\nNEW: delivery triggers Klaviyo flows\nPaused — 1 mailing budget left',
+      statustext:'Active — but direct mail paused (budget)',
+      what:'Physical postcards triggered by Klaviyo segments. Strategies: retention (reactivate ~47k unsubscribed owners), site retargeting via pixel, cold prospecting via Claritas data. NEW: direct-mail "flows" — postcard-delivery events sent to Klaviyo to trigger flows.',
+      connections:[['Klaviyo','Sends segments to trigger mailings; NEW — postcard-delivery events flow back (integration pending)'],['Segment Ninja','Claritas data builds prospecting lists'],['Mercana','Property segments + possible postcard design input']],
+      owner:'Kelly Barden (Post Pilot). Alen side: Horacio (on leave — covered by "another Alexandra").',
+      notes:'First test mail returned ~9x ROI (Joey: "we stacked the deck"). Post Pilot announced direct-mail FLOWS; data not visible in Klaviyo yet (waiting on integration). BUDGET: only one more mailing approved — Winston wants to PAUSE direct mail and lean Mercana into the email side.' },
+
+    { id:'meta', column:'outbound', group:'', statusType:'active', badge:'',
+      name:'Meta / Facebook', cat:'Ad Retargeting', role:'Ad retargeting.\nAudience sync from Klaviyo +\nPRIZM data from Seg. Ninja',
+      statustext:'Active',
+      what:'Ad platform. Veronica manages audience syncs from Klaviyo. Joey wants 70/30 spend split (retargeting vs prospecting) using PRIZM demographic data from Segment Ninja.',
+      connections:[['Klaviyo','Audience sync — engaged, unengaged, unsubscribed lists'],['Segment Ninja','PRIZM data for demographic targeting']],
+      owner:'Veronica (retargeting syncs)',
+      notes:'Erik was coordinating with Veronica on syncing email-unengaged and unsubscribed audiences to Meta for retargeting.' },
+  ]
+};
+
+/* ---------------- State ---------------- */
+let model = clone(DEFAULT_MODEL);
+let currentId = null;
+let loadedSha = null;
+let dirty = false;
+let draggedId = null;
+let justDragged = false;
+
+const LS_GH = 'alenEcoGH';
+const LS_WORK = 'alenEcoWorking';
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ghCfg(){ try { return Object.assign({}, GH_DEFAULTS, JSON.parse(localStorage.getItem(LS_GH)||'{}')); } catch(e){ return Object.assign({}, GH_DEFAULTS); } }
+function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64decode(b){ try { return decodeURIComponent(escape(atob(b.replace(/\s/g,'')))); } catch(e){ return atob(b.replace(/\s/g,'')); } }
+
+/* ---------------- Rendering ---------------- */
+function render(){
+  const flow = document.getElementById('flow');
+  flow.innerHTML = '';
+  COLUMNS.forEach((col, i) => {
+    flow.appendChild(renderColumn(col));
+    if (i < COLUMNS.length - 1) flow.appendChild(renderArrow(i));
+  });
+  document.getElementById('updated-text').textContent = model.meta.updated ? '| ' + model.meta.updated : '';
+  const cl = document.getElementById('changelog');
+  if (document.activeElement !== cl) cl.innerHTML = model.meta.changelog || '';
+}
+
+function renderArrow(i){
+  const a = document.createElement('div');
+  a.className = 'arrow-col';
+  a.innerHTML = '<svg width="40" height="24" viewBox="0 0 40 24"><path d="M4 12h28m0 0l-8-7m8 7l-8 7" stroke="#1FA89B" stroke-width="'+(i===1?'2.5':'2')+'" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' + (i===1?'<div class="sync">sync</div>':'');
+  return a;
+}
+
+function renderColumn(col){
+  const el = document.createElement('div');
+  el.className = 'col';
+  el.dataset.column = col.id;
+  el.dataset.group = '';
+  const h = document.createElement('div');
+  h.className = 'col-header';
+  h.textContent = col.title;
+  el.appendChild(h);
+
+  // loose items (no group)
+  model.items.filter(it => it.column === col.id && (!it.group)).forEach(it => el.appendChild(renderCard(it)));
+
+  // groups
+  col.groups.forEach(g => {
+    const gz = document.createElement('div');
+    gz.className = 'group';
+    gz.dataset.column = col.id;
+    gz.dataset.group = g;
+    const gl = document.createElement('div');
+    gl.className = 'group-label';
+    gl.textContent = g;
+    gz.appendChild(gl);
+    model.items.filter(it => it.column === col.id && it.group === g).forEach(it => gz.appendChild(renderCard(it)));
+    attachDrop(gz);
+    el.appendChild(gz);
+    const note = COL_NOTES[col.id + '::' + g];
+    if (note){ const n = document.createElement('div'); n.className='col-note'; n.textContent = note; el.appendChild(n); }
+  });
+
+  attachDrop(el);
+  return el;
+}
+
+function renderCard(it){
+  const c = document.createElement('div');
+  c.className = 'card';
+  if (it.hub) c.classList.add('hub');
+  if (it.accent === 'klaviyo') c.classList.add('accent-klaviyo');
+  if (it.accent === 'email') c.classList.add('accent-email');
+  if (it.statusType === 'removed') c.classList.add('removed');
+  if (it.statusType === 'pending') c.classList.add('pending');
+  c.dataset.id = it.id;
+  c.setAttribute('draggable','true');
+
+  const showBadge = it.badge || (it.statusType && it.statusType !== 'none');
+  const badgeLabel = it.badge || DEFAULT_BADGE[it.statusType] || '';
+  const badgeHtml = showBadge ? '<span class="badge badge-'+(it.statusType||'active')+'">'+esc(badgeLabel)+'</span>' : '';
+  const roleHtml = esc(it.role).replace(/\n/g,'<br>');
+  c.innerHTML = badgeHtml + '<h3>'+esc(it.name)+'</h3><div class="role">'+roleHtml+'</div><span class="grip">⠿</span>';
+
+  c.addEventListener('click', () => { if (justDragged) return; openPanel(it.id); });
+  c.addEventListener('dragstart', e => { draggedId = it.id; justDragged = true; c.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain', it.id);}catch(_){} });
+  c.addEventListener('dragend', () => { c.classList.remove('dragging'); draggedId=null; setTimeout(()=>{justDragged=false;}, 60); });
+  return c;
+}
+
+/* ---------------- Drag & drop ---------------- */
+function attachDrop(zone){
+  zone.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', e => { if (!zone.contains(e.relatedTarget)) zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation();
+    zone.classList.remove('drag-over');
+    if (!draggedId) return;
+    const beforeId = getBeforeId(zone, e.clientY);
+    moveItem(draggedId, zone.dataset.column, zone.dataset.group || '', beforeId);
+    markDirty(); render(); reselect();
+  });
+}
+function getBeforeId(zone, y){
+  const cards = [...zone.children].filter(c => c.classList.contains('card') && c.dataset.id !== draggedId);
+  for (const c of cards){ const r = c.getBoundingClientRect(); if (y < r.top + r.height/2) return c.dataset.id; }
+  return null;
+}
+function moveItem(id, col, grp, beforeId){
+  const it = model.items.find(x => x.id === id); if (!it) return;
+  it.column = col; it.group = grp;
+  const rest = model.items.filter(x => x.id !== id);
+  let idx;
+  if (beforeId){ idx = rest.findIndex(x => x.id === beforeId); }
+  else { let last = -1; rest.forEach((x,i)=>{ if (x.column===col && (x.group||'')===grp) last = i; }); idx = last + 1; }
+  if (idx < 0) idx = rest.length;
+  rest.splice(idx, 0, it);
+  model.items = rest;
+}
+
+/* ---------------- Edit panel ---------------- */
+function populateColumnSelect(){
+  const sel = document.getElementById('f-column');
+  sel.innerHTML = COLUMNS.map(c => '<option value="'+c.id+'">'+esc(c.title)+'</option>').join('');
+}
+function populateGroupSelect(colId, current){
+  const sel = document.getElementById('f-group');
+  const col = COLUMNS.find(c => c.id === colId);
+  const groups = col ? col.groups : [];
+  sel.innerHTML = '<option value="">— none (loose) —</option>' + groups.map(g => '<option value="'+esc(g)+'">'+esc(g)+'</option>').join('');
+  sel.value = groups.includes(current) ? current : '';
+}
+
+function openPanel(id){
+  const it = model.items.find(x => x.id === id); if (!it) return;
+  currentId = id;
+  document.querySelectorAll('.card').forEach(c => c.classList.toggle('selected', c.dataset.id === id));
+  document.getElementById('panel-title').textContent = 'Edit tool';
+  document.getElementById('f-name').value = it.name || '';
+  document.getElementById('f-cat').value = it.cat || '';
+  document.getElementById('f-status').value = it.statusType || 'active';
+  document.getElementById('f-badge').value = it.badge || '';
+  document.getElementById('f-role').value = it.role || '';
+  populateColumnSelect();
+  document.getElementById('f-column').value = it.column || 'datain';
+  populateGroupSelect(it.column || 'datain', it.group || '');
+  document.getElementById('f-hub').checked = !!it.hub;
+  document.getElementById('f-what').value = it.what || '';
+  document.getElementById('f-statustext').value = it.statustext || '';
+  document.getElementById('f-conn').value = (it.connections||[]).map(c => c[0] + ' — ' + c[1]).join('\n');
+  document.getElementById('f-owner').value = it.owner || '';
+  document.getElementById('f-notes').value = it.notes || '';
+  document.getElementById('detail').classList.add('open');
+}
+function reselect(){ if (currentId) document.querySelectorAll('.card').forEach(c => c.classList.toggle('selected', c.dataset.id === currentId)); }
+
+function applyField(field, value, rerender){
+  if (!currentId) return;
+  const it = model.items.find(x => x.id === currentId); if (!it) return;
+  if (field === 'connections'){
+    it.connections = value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+      const m = l.split(/\s[—-]\s/); return [m[0].trim(), (m.slice(1).join(' - ')||'').trim()];
+    });
+  } else if (field === 'hub'){ it.hub = value; }
+  else { it[field] = value; }
+  markDirty();
+  if (rerender){ render(); reselect(); }
+}
+
+function bindPanel(){
+  document.getElementById('f-name').addEventListener('input', e => applyField('name', e.target.value, false));
+  document.getElementById('f-name').addEventListener('blur', () => { render(); reselect(); });
+  document.getElementById('f-cat').addEventListener('input', e => applyField('cat', e.target.value, false));
+  document.getElementById('f-status').addEventListener('change', e => applyField('statusType', e.target.value, true));
+  document.getElementById('f-badge').addEventListener('input', e => applyField('badge', e.target.value, false));
+  document.getElementById('f-badge').addEventListener('blur', () => { render(); reselect(); });
+  document.getElementById('f-role').addEventListener('input', e => applyField('role', e.target.value, false));
+  document.getElementById('f-role').addEventListener('blur', () => { render(); reselect(); });
+  document.getElementById('f-column').addEventListener('change', e => {
+    applyField('column', e.target.value, false);
+    populateGroupSelect(e.target.value, '');
+    applyField('group', '', true);
+  });
+  document.getElementById('f-group').addEventListener('change', e => applyField('group', e.target.value, true));
+  document.getElementById('f-hub').addEventListener('change', e => applyField('hub', e.target.checked, true));
+  document.getElementById('f-what').addEventListener('input', e => applyField('what', e.target.value, false));
+  document.getElementById('f-statustext').addEventListener('input', e => applyField('statustext', e.target.value, false));
+  document.getElementById('f-conn').addEventListener('input', e => applyField('connections', e.target.value, false));
+  document.getElementById('f-owner').addEventListener('input', e => applyField('owner', e.target.value, false));
+  document.getElementById('f-notes').addEventListener('input', e => applyField('notes', e.target.value, false));
+  document.getElementById('f-delete').addEventListener('click', deleteCurrent);
+}
+
+function closePanel(){
+  document.getElementById('detail').classList.remove('open');
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  currentId = null;
+}
+function deleteCurrent(){
+  if (!currentId) return;
+  const it = model.items.find(x => x.id === currentId);
+  if (!confirm('Delete "'+(it?it.name:'this tool')+'"? You can undo by reloading from GitHub before you save.')) return;
+  model.items = model.items.filter(x => x.id !== currentId);
+  closePanel(); markDirty(); render();
+}
+
+function addTool(){
+  const id = 'tool-' + Date.now().toString(36);
+  model.items.unshift({ id, column:'datain', group:'', statusType:'active', badge:'',
+    name:'New tool', cat:'', role:'Describe it here', statustext:'Active',
+    what:'', connections:[], owner:'', notes:'' });
+  markDirty(); render();
+  openPanel(id);
+  setTimeout(() => { const n = document.getElementById('f-name'); n.focus(); n.select(); }, 50);
+}
+
+/* ---------------- Persistence ---------------- */
+function markDirty(){ dirty = true; updateStatusUI(); try{ localStorage.setItem(LS_WORK, JSON.stringify(model)); }catch(e){} }
+function markClean(){ dirty = false; updateStatusUI(); try{ localStorage.removeItem(LS_WORK); }catch(e){} }
+function updateStatusUI(){
+  document.getElementById('save-btn').classList.toggle('dirty', dirty);
+  const cfg = ghCfg();
+  let s;
+  if (!cfg.owner || !cfg.repo) s = 'Not connected to GitHub — open ⚙ Settings';
+  else if (dirty) s = 'Unsaved changes';
+  else s = 'Synced with ' + cfg.owner + '/' + cfg.repo;
+  document.getElementById('status-text').textContent = s;
+}
+
+function apiUrl(cfg){ return 'https://api.github.com/repos/'+cfg.owner+'/'+cfg.repo+'/contents/'+cfg.path; }
+function rawUrl(cfg){ return 'https://raw.githubusercontent.com/'+cfg.owner+'/'+cfg.repo+'/'+cfg.branch+'/'+cfg.path+'?t='+Date.now(); }
+
+async function loadModel(opts){
+  opts = opts || {};
+  const cfg = ghCfg();
+  // restore unsaved working copy first (so a refresh doesn't lose edits)
+  if (!opts.force){
+    try { const w = localStorage.getItem(LS_WORK); if (w){ model = JSON.parse(w); dirty = true; } } catch(e){}
+  }
+  if (cfg.owner && cfg.repo){
+    try {
+      let data;
+      if (cfg.token){
+        const r = await fetch(apiUrl(cfg)+'?ref='+cfg.branch, { headers:{ Authorization:'Bearer '+cfg.token, Accept:'application/vnd.github+json' }, cache:'no-store' });
+        if (r.status === 404){ loadedSha = null; toast('No data.json yet — first Save will create it.'); render(); updateStatusUI(); return; }
+        if (!r.ok) throw new Error('GitHub '+r.status);
+        const j = await r.json(); loadedSha = j.sha; data = JSON.parse(b64decode(j.content));
+      } else {
+        const r = await fetch(rawUrl(cfg), { cache:'no-store' });
+        if (!r.ok){ if (r.status===404){ render(); updateStatusUI(); return; } throw new Error('raw '+r.status); }
+        data = await r.json(); loadedSha = null;
+      }
+      if (!opts.force && dirty){ render(); updateStatusUI(); return; } // keep local edits over remote on initial load
+      model = data; markClean(); render();
+      if (opts.force) toast('Reloaded from GitHub ✓');
+      updateStatusUI();
+      return;
+    } catch(e){ toast('Could not load from GitHub: '+e.message, true); }
+  }
+  render(); updateStatusUI();
+}
+
+async function saveModel(){
+  const cfg = ghCfg();
+  if (!cfg.owner || !cfg.repo){ openSettings(); toast('Add your repo + token first.', true); return; }
+  if (!cfg.token){ openSettings(); toast('Add a GitHub token to save.', true); return; }
+  const btn = document.getElementById('save-btn'); btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Saving…';
+  try {
+    // conflict check: get current sha
+    let curSha = null;
+    const g = await fetch(apiUrl(cfg)+'?ref='+cfg.branch, { headers:{ Authorization:'Bearer '+cfg.token, Accept:'application/vnd.github+json' }, cache:'no-store' });
+    if (g.ok){ const gj = await g.json(); curSha = gj.sha; }
+    else if (g.status !== 404){ throw new Error('GitHub '+g.status); }
+    if (curSha && loadedSha && curSha !== loadedSha){
+      if (!confirm('A teammate has saved changes since you loaded this page. Saving now will overwrite theirs.\n\nOK = overwrite anyway · Cancel = stop (then click Reload to get their version first).')){ btn.disabled=false; btn.textContent=orig; return; }
+    }
+    const body = { message:'Update tech ecosystem via editor', content:b64encode(JSON.stringify(model, null, 2)), branch:cfg.branch };
+    if (curSha) body.sha = curSha;
+    const r = await fetch(apiUrl(cfg), { method:'PUT', headers:{ Authorization:'Bearer '+cfg.token, Accept:'application/vnd.github+json' }, body:JSON.stringify(body) });
+    if (!r.ok){ const t = await r.text(); throw new Error('GitHub '+r.status+' '+t.slice(0,120)); }
+    const j = await r.json(); loadedSha = j.content.sha; markClean();
+    toast('Saved to GitHub ✓ — live for everyone.');
+  } catch(e){ toast('Save failed: '+e.message, true); }
+  finally { btn.disabled = false; btn.textContent = orig; updateStatusUI(); }
+}
+
+function exportJson(){
+  const blob = new Blob([JSON.stringify(model, null, 2)], { type:'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'data.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('data.json downloaded — commit it to your repo to publish.');
+}
+
+/* ---------------- Settings modal ---------------- */
+function openSettings(){
+  const cfg = ghCfg();
+  document.getElementById('s-owner').value = cfg.owner || '';
+  document.getElementById('s-repo').value = cfg.repo || '';
+  document.getElementById('s-branch').value = cfg.branch || 'main';
+  document.getElementById('s-path').value = cfg.path || 'data.json';
+  document.getElementById('s-token').value = cfg.token || '';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal').classList.add('open');
+}
+function closeSettings(){ document.getElementById('overlay').classList.remove('open'); document.getElementById('modal').classList.remove('open'); }
+function saveSettings(){
+  const cfg = { owner:val('s-owner').trim(), repo:val('s-repo').trim(), branch:(val('s-branch').trim()||'main'), path:(val('s-path').trim()||'data.json'), token:val('s-token').trim() };
+  try { localStorage.setItem(LS_GH, JSON.stringify(cfg)); } catch(e){}
+  closeSettings(); toast('Settings saved.'); loadedSha = null; loadModel({ force:true });
+}
+function val(id){ return document.getElementById(id).value; }
+
+/* ---------------- Toast ---------------- */
+let toastTimer = null;
+function toast(msg, isErr){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.toggle('err', !!isErr); t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ---------------- Wire up ---------------- */
+document.getElementById('add-btn').addEventListener('click', addTool);
+document.getElementById('save-btn').addEventListener('click', saveModel);
+document.getElementById('reload-btn').addEventListener('click', () => {
+  if (dirty && !confirm('Reload from GitHub and discard your unsaved changes?')) return;
+  loadedSha = null; loadModel({ force:true });
+});
+document.getElementById('export-btn').addEventListener('click', exportJson);
+document.getElementById('settings-btn').addEventListener('click', openSettings);
+document.getElementById('s-save').addEventListener('click', saveSettings);
+document.getElementById('s-clear').addEventListener('click', () => { document.getElementById('s-token').value=''; });
+document.getElementById('overlay').addEventListener('click', closeSettings);
+document.getElementById('changelog').addEventListener('blur', e => { model.meta.changelog = e.target.innerHTML; markDirty(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closePanel(); closeSettings(); } });
+window.addEventListener('beforeunload', e => { if (dirty){ e.preventDefault(); e.returnValue=''; } });
+
+bindPanel();
+loadModel();
+</script>
+</body>
+</html>
